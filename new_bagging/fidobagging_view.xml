@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		<!-- Bagger Base Form -->
+		<record id ="bagger_menu_action" model="ir.actions.act_window">
+			<field name="name">Bagger</field>
+			<field name="res_model">fido.bagger</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="help" type="html">
+				<p class="oe_view_nocontent_create"> Click create to add new bagging records.</p>
+			</field>
+		</record>
+
+		<!-- Bagger extended Form -->
+		<record id="bagger_form_view" model="ir.ui.view">
+			<field name="name">bagger.form.view</field>
+			<field name="view_type">form</field>
+			<field name="model">fido.bagger</field>
+			<field name="arch" type="xml">
+				<form string="Bagger">
+					<sheet>
+						<group col="2">
+							<field name="name" colspan="2" domain="[('job_id','=','Bagger')]"/>
+							<field name="fido_date" widget="date"/>
+							<field name="x_quantity" />
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+		
+		<!-- Bagger extended Tree Form -->
+		<record id="bagger_tree_view" model="ir.ui.view">
+			<field name="name">bagger.tree.view</field>
+			<field name="view_type">tree</field>
+			<field name="model">fido.bagger</field>
+			<field name="arch" type="xml">
+				<tree string="Bagger">
+						<field name="name"/>
+						<field name="fido_date" widget="date"/>
+						<field name="x_quantity"/>
+				</tree>
+			</field>
+		</record>
+			
+		<!-- Bagger Base Form to display inherited employee on another level after over-riding default employee-->
+		<record id ="bagger_menu_action_default" model="ir.actions.act_window">
+			<field name="name">Employees</field>
+			<field name="res_model">hr.employee</field>
+			<field name="view_mode">kanban,tree,form</field>
+			<field name="inherit_id" ref="hr.view_employee_form"/>
+		</record> 
+
+		<!--Menu item for Employee -->
+		<menuitem id="bagging_menu_default" 
+			name="Employees" 
+			parent="hr.menu_open_view_employee_list_my"
+			action="bagger_menu_action_default" 
+			/>
+
+		<!-- Menu Item for bagger -->
+		<menuitem id="bagging_menu" 
+			name="Baggers" 
+			parent="hr.menu_open_view_employee_list_my"
+			action="bagger_menu_action" sequence="4" />
+
+	</data>
+</openerp>
