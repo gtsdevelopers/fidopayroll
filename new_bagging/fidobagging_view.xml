@@ -20,10 +20,27 @@
 			<field name="arch" type="xml">
 				<form string="Bagger">
 					<sheet>
-						<group col="2">
+						<h1 class="mt0">
+                        <field name="top_name" readonly="1" class="oe_inline, oe_read_only"/>
+                    	</h1>
+						<group col="2" string=" ">
 							<field name="name" colspan="2" domain="[('job_id','=','Bagger')]"/>
-							<field name="fido_date" widget="date"/>
-							<field name="x_quantity" />
+							<field name="x_month"/>
+						</group>
+						<group string="Daily Details">
+						<notebook colspan="2">
+                        <page>
+                            <field name="bagger_line_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Invoice Lines" editable="bottom">
+                                    <field name="fido_date" widget="date"/>
+									<field name="x_quantity" />
+								</tree>
+							</field>
+							<group class="oe_subtotal_footer oe_right">
+									<field name="qty_total"/>
+                        	</group>
+						</page>
+						</notebook>
 						</group>
 					</sheet>
 				</form>
@@ -38,11 +55,27 @@
 			<field name="arch" type="xml">
 				<tree string="Bagger">
 						<field name="name"/>
-						<field name="fido_date" widget="date"/>
-						<field name="x_quantity"/>
+						<field name="x_month"/>
+						<field name="qty_total"/>
 				</tree>
 			</field>
 		</record>
+		
+		<record model="ir.ui.view" id="bagger_search_view">
+            <field name="name">bagger.search.view</field>
+            <field name="model">fido.bagger</field>
+            <field name="arch" type="xml">
+                <search string="Bagging Records">
+                    	<field name="name"/>
+						<field name="x_month"/>
+						<field name="qty_total"/>
+                    <group expand="0" string="Group By" >
+                        <filter string="Month" name="Responsible" context="{'group_by':'x_month'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+		
 			
 		<!-- Bagger Base Form to display inherited employee on another level after over-riding default employee-->
 		<record id ="bagger_menu_action_default" model="ir.actions.act_window">
