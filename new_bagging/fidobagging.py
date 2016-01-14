@@ -4,8 +4,35 @@ import datetime
 class fido_bagging(models.Model):
 	_name = "fido.bagger"
 	name = fields.Many2one('hr.employee',string='Bagger', size=32, required=True)
-	fido_date = fields.Date(string='Date')
-	x_quantity = fields.Integer(string="No of Bags")
+	bagger_line_ids = fields.One2many('fido.bagger.line', 'bagger_id')
+	x_month = fields.Selection([('january','January'),('february','February'),('march','March'),
+							('april','April'),('may','May'),('june','June'),('july','July'),
+							('august','August'),('september','September'),('october','October'),
+							('november','November'),('december','December')],string='Month', required=True , default='january')
+	qty_total = fields.Float(compute='compute_bagging_total', string='Total')
+	top_name = fields.Char(compute='get_month')
+	
+	@api.one
+	@api.depends('x_month')
+	def get_month(self):
+#		if self.x_month in self:
+		for record in self:
+			record.top_name = record.x_month.title() + ' Record'
+		
+	
+	@api.one
+	@api.depends('bagger_line_ids.x_quantity')
+	def compute_bagging_total(self):
+		self.qty_total = sum(line.x_quantity for line in self.bagger_line_ids)
+		
+
+class fido_bagger_line(models.Model):
+	_name ="fido.bagger.line"
+	bagger_id = fields.Many2one('fido.bagger', string='Fido Reference')
+	fido_date = fields.Date(default=fields.Date.today(), required=True)
+	x_quantity = fields.Integer(string="No of Bags", required=True)
+	
+	
 	
 
 class fido_bagging_inherit(models.Model):
