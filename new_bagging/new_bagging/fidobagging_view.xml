@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		<!-- Bagger Base Form -->
+		<record id ="bagger_menu_action" model="ir.actions.act_window">
+			<field name="name">Bagger</field>
+			<field name="res_model">fido.bagger</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="help" type="html">
+				<p class="oe_view_nocontent_create"> Click create to add new bagging records.</p>
+			</field>
+		</record>
+
+		<!-- Bagger extended Form -->
+		<record id="bagger_form_view" model="ir.ui.view">
+			<field name="name">bagger.form.view</field>
+			<field name="view_type">form</field>
+			<field name="model">fido.bagger</field>
+			<field name="arch" type="xml">
+				<form string="Bagger">
+					<sheet>
+						<h1 class="mt0">
+                        <field name="top_name" readonly="1" class="oe_inline, oe_read_only"/>
+                    	</h1>
+						<group col="2" string=" ">
+							<field name="name" colspan="2" domain="[('job_id','=','Bagger')]"/>
+							<field name="x_month"/>
+						</group>
+						<group string="Daily Details">
+						<notebook colspan="2">
+                        <page>
+                            <field name="bagger_line_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Invoice Lines" editable="bottom">
+                                    <field name="fido_date" widget="date"/>
+									<field name="x_quantity" />
+								</tree>
+							</field>
+							<group class="oe_subtotal_footer oe_right">
+									<field name="qty_total"/>
+                        	</group>
+						</page>
+						</notebook>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+		
+		<!-- Bagger extended Tree Form -->
+		<record id="bagger_tree_view" model="ir.ui.view">
+			<field name="name">bagger.tree.view</field>
+			<field name="view_type">tree</field>
+			<field name="model">fido.bagger</field>
+			<field name="arch" type="xml">
+				<tree string="Bagger">
+						<field name="name"/>
+						<field name="x_month"/>
+						<field name="qty_total" sum="Total"/>
+				</tree>
+			</field>
+		</record>
+		
+		<record model="ir.ui.view" id="bagger_search_view">
+            <field name="name">bagger.search.view</field>
+            <field name="model">fido.bagger</field>
+            <field name="arch" type="xml">
+                <search string="Bagging Records">
+                    	<field name="name"/>
+						<field name="x_month"/>
+						<field name="qty_total"/>
+                    <group expand="0" string="Group By" >
+                        <filter string="Month" name="Responsible" context="{'group_by':'x_month'}"/>
+                        <filter string="Bagger" name="Responsible" context="{'group_by':'name'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+		
+			
+		<!-- Bagger Base Form to display inherited employee on another level after over-riding default employee-->
+		<record id ="bagger_menu_action_default" model="ir.actions.act_window">
+			<field name="name">Employees</field>
+			<field name="res_model">hr.employee</field>
+			<field name="view_mode">kanban,tree,form</field>
+		</record> 
+
+		<!--Menu item for Employee -->
+		<menuitem id="bagging_menu_default" 
+			name="Employees" 
+			parent="hr.menu_open_view_employee_list_my"
+			action="bagger_menu_action_default" 
+			/>
+
+		<!-- Menu Item for bagger -->
+		<menuitem id="bagging_menu" 
+			name="Baggers" 
+			parent="hr.menu_open_view_employee_list_my"
+			action="bagger_menu_action" sequence="4" />
+
+	</data>
+</openerp>
