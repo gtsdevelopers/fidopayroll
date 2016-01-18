@@ -25,6 +25,18 @@ class fido_bagging(models.Model):
 	def compute_bagging_total(self):
 		self.qty_total = sum(line.x_quantity for line in self.bagger_line_ids)
 		
+	def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, lazy=True):
+		res = super(fido_bagging, self).read_group(cr, uid, domain, fields, groupby, offset, limit=limit, context=context, orderby=orderby, lazy=lazy)
+		if 'qty_total' in fields:
+			for line in res:
+				if '__domain' in line:
+					lines = self.search(cr, uid, line['__domain'], context=context)
+					pending_value = 0.0
+					for current_account in self.browse(cr, uid, lines, context=context):
+							pending_value += current_account.qty_total
+					line['qty_total'] = pending_value
+		return res
+		
 
 class fido_bagger_line(models.Model):
 	_name ="fido.bagger.line"
