@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+	
+		<!-- Payroll Base Form -->
+		<record id ="fidopayroll_menu_action" model="ir.actions.act_window">
+			<field name="name">Fido Payroll</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">fido.payroll</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="help" type="html">
+				<p class="oe_view_nocontent_create"> Click create to add new Payroll records.</p>
+			</field>
+		</record>
+		
+		
+		<!-- Payroll extended Form -->
+		<record id="fidopayroll_form_view" model="ir.ui.view">
+			<field name="name">payroll.form.view</field>
+			<field name="view_type">form</field>
+			<field name="model">fido.payroll</field>
+			<field name="arch" type="xml">
+				<form string="Payroll">
+					<sheet>
+						<h1 class="mt0">
+                        <field name="top_name" readonly="1" class="oe_inline, oe_read_only"/>
+                    	</h1>
+						<group col="2" string=" ">
+							<field name="name" colspan="2" />
+							<field name="f_mnth"/>
+							<field name="start_date"/>
+                            <field name="end_date"/>
+						</group>
+						
+                 
+						<group string="Pay Details">
+						<notebook colspan="2">
+                        <page  name="payslip_items" string="Payslip Items">
+                            <field name="payroll_line_ids" nolabel="1" widget="one2many_list">
+                                <tree string="Payroll Lines" editable="bottom">
+                                   <field name="item_id"/>
+                                    <field name="item_qty"/>
+                                    
+                                    <field name="item_mult"/>
+                                    <field name="line_total"/>
+                                    
+								</tree>
+							</field>
+							<group class="oe_subtotal_footer oe_right">
+									<field name="payroll_total"/>
+                        	</group>
+						</page>
+						<page name="note" string="Notes">
+                               <h3> <field name="note" placeholder="Notes..."/></h3>
+                        </page>
+						
+						</notebook>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+		
+		<!-- Payroll extended Tree Form -->
+		<record id="fidopayroll_tree_view" model="ir.ui.view">
+			<field name="name">payroll.tree.view</field>
+			<field name="view_type">tree</field>
+			<field name="model">fido.payroll</field>
+			<field name="arch" type="xml">
+				<tree string="Fido Payroll">
+						<field name="name"/>
+						<field name="job_title"/>
+						<field name="bank_account"/>
+						<field name="f_mnth"/>
+						<field name="payroll_total" sum="Payroll Total" type="char"/>
+						
+				</tree>
+			</field>
+		</record>
+		
+		<record model="ir.ui.view" id="fidopayroll_search_view">
+            <field name="name">payroll.search.view</field>
+            <field name="model">fido.payroll</field>
+            <field name="arch" type="xml">
+                <search string="Fido Payroll Records">
+                    	<field name="name"/>
+						<field name="f_mnth"/>
+						<field name="payroll_total" type="char"/>
+                    <group expand="0" string="Group By" >
+                        <filter string="Month" name="Responsible" context="{'group_by':'f_mnth'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+		
+		<!-- Payroll from employee button Form-->
+		<record id ="fidopayroll_2_menu_action" model="ir.actions.act_window">
+			<field name="name">Fido Payroll</field>
+			<field name="res_model">fido.payroll</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="search_view_id" ref="fidopayroll_search_view"/>
+			<field name="context">{'search_default_name': [active_id], 'default_name': active_id}</field>
+			<field name="help" type="html">
+				<p class="oe_view_nocontent_create"> Click create to add new Payroll records.</p>
+			</field>
+		</record>
+		
+		
+		
+		<!-- Payroll Base Form to display inherited employee on another level after over-riding default employee-->
+		<record id ="fidopayroll_menu_action_default" model="ir.actions.act_window">
+			<field name="name">Employees</field>
+			<field name="res_model">hr.employee</field>
+			<field name="view_mode">kanban,tree,form</field>
+		</record> 
+
+		
+		<!-- Menu Item for bagger -->
+		<menuitem id="fidopayroll_menu" 
+			name="Fido Payroll" 
+			parent="hr_payroll.menu_hr_payroll_root"
+			action="fidopayroll_menu_action" sequence="9"
+			groups="base.group_hr_manager,base.group_configuration" />
+
+	</data>
+</openerp>

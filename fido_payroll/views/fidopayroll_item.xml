@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+         <!--Payroll Items Menu-->
+         <record id="fidopayroll_item_menu_action" model="ir.actions.act_window" >
+            <field name="name">Payroll Items</field>
+            <field name="res_model">fido.payroll.item</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!--Items Tree-->
+
+         <record id="fidopayroll_item_tree_view" model="ir.ui.view">
+            <field name="name">fidopayroll.item.tree</field>
+            <field name="model">fido.payroll.item</field>
+            <field name="arch" type="xml">
+                <tree string="Payroll items">
+                <field name="name" />
+                
+                </tree>
+            </field>
+         </record>
+         
+
+
+        <!--payroll Form-->
+        <record id="fidopayroll_item_form_view" model="ir.ui.view">
+            <field name="name">fidopayroll.item.form</field>
+            <field name="model">fido.payroll.item</field>
+            <field name="view_type">form</field>
+            <field name="arch" type="xml">
+                <form string="Fido Payroll Items">
+                    <sheet>
+                        <group>
+                            <field name="name" string="Payroll Item"  />
+                            
+                        </group>
+                    </sheet>
+                </form>
+
+            </field>
+        </record>
+        
+        
+        <!--Menu  Fido Payroll Item -->
+        <menuitem id="fidopayroll_item_menu" 
+            name="Fido Payroll Items" 
+            parent="hr_payroll.menu_hr_payroll_root"
+            action="fidopayroll_item_menu_action" sequence="10"
+            groups="base.group_hr_manager,base.group_configuration" />
+    </data>
+</openerp>

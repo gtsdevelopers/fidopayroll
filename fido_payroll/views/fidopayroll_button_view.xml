@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <!-- Fido Employee Button -->
+        <record id="fido_employee_button_view" model="ir.ui.view">
+            <field name="name">fido.employee.button.view</field>
+            <field name="model">hr.employee</field>
+            <field name="inherit_id" ref="hr.view_employee_form"/>
+            <field name="arch" type="xml">
+                    <xpath expr="//div[@name='button_box']" position="inside">
+                    <button type="action" 
+                        class="oe_stat_button" 
+                        icon="fa-money" 
+                        name="%(fidopayroll_2_menu_action)d" >
+                        <field name="pay_log" widget="statinfo" string="Fido PaySlips"/>
+                    </button>
+                    </xpath>
+            </field>
+        </record>
+    </data>
+</openerp>
