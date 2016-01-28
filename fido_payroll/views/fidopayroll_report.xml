@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <!-- Print Report for Fido Payroll List View -->
+
+        <report
+            id="fido_payroll_payrollreport_action"
+            model="fido.payroll"
+            string="FIDO PAYROLL REPORT"
+            report_type="qweb-pdf"
+            name="fido_payroll.payrollreport"
+            file="fido_payroll.payrollreport"
+  
+        />
+       
+
+
+    </data>
+</openerp>

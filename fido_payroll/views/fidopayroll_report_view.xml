@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <!-- Print Report for Fido Payroll List View -->
+        
+        <!-- Main template -->
+        <template id="payrollreport">
+            <t t-call="report.html_container">
+            <t t-call="report.external_layout">
+            <div class="oe_structure"/>
+            <div class="page">
+                
+                <h2> Fido Payroll Report for <span t-field="docs[0].f_mnth"/>, <span t-field="docs[0].pay_year"/></h2>
+                <h3> Payroll Period <span t-field="docs[0].start_date"/> - <span t-field="docs[0].end_date"/></h3>
+                
+                <table class="table table-condensed" border="1">
+                       <thead>
+                            <tr>
+                                <th>SYSID</th>
+                                <th class="text-left">Name</th>
+                                <th class="text-left">Job_Title</th>
+                                <th class="text-left">Account No</th>
+                                <th class="text-left">Month</th>
+                                <th class="text-left">Net Amount</th> 
+                                
+                            </tr>
+                       </thead>
+                           
+                           
+                    <t t-foreach="docs" t-as="doc">
+                    <div class="row">
+                        
+                        
+                        <tbody class="report_tbody">
+                           
+                                
+                                    <tr t-if="doc.id">
+                                        <td class="text-left">
+                                           <span  t-field="doc.id"/>
+                                        </td>
+                                        <td class="text-left">
+                                           <span  t-field="doc.name"/>
+                                        </td>
+                                        <td class="text-left">
+                                           <span t-field="doc.job_title"/>
+                                        </td>
+                                        <td class="text-left">
+                                            <span t-field="doc.bank_account"/>
+                                            
+                                        </td>
+                                        <td class="text-left">
+                                            <span t-field="doc.f_mnth"/>
+                                        </td>
+                                        
+                                        <td class="text-left">
+                                            <span t-field="doc.payroll_total"/>
+                                        </td>
+                                        
+                                    </tr>
+                                
+                        </tbody>
+                        
+                    </div> <!-- Row DiV -->
+                    </t> <!-- foreach docs t -->
+                </table>
+                <div class="oe_structure"/>
+            </div> <!-- Page DIV -->
+            </t>
+            </t>
+        </template>
+        
+        
+
+    </data>
+</openerp>

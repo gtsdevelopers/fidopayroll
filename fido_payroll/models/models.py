@@ -1,6 +1,10 @@
 from openerp import api, fields, models
 import datetime
+import time
+from datetime import date,timedelta
+from dateutil.relativedelta import relativedelta
 import logging
+
 _logger = logging.getLogger(__name__)
 #         _logger.info("PAYROLL ID=%i",record.payroll_id.name.id)
 # _logger.info should be inside function
@@ -21,56 +25,62 @@ class hr_contract(models.Model):
                                help="Loan Advance. Varies per individual")
     payee = fields.Float('PAYEE TAX Ded', digits=(7, 2), required=True, 
                                help="PAYEE TAX. Varies per individual")
+    days_absent = fields.Integer('Days Absent',  required=True,
+                               help="Days absent from Work in Month. Affects Base Salary")
 
     
 class fido_payroll(models.Model):
     _name = "fido.payroll"
     _description = 'Fido Payroll Architecture'
     name = fields.Many2one('hr.employee',string='Payroll Staff', size=32, required=True)
-    start_date = fields.Date('Date Begin')
-    end_date = fields.Date('Date End')   
+    start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
+    end_date = fields.Date('Date End',default=date.today())
+        
+    work_days_tot = fields.Integer(compute='get_workdays', string='Total Work Days',store=True)
     note = fields.Text(string='Miscellaneous Notes')
     payroll_line_ids = fields.One2many('fido.payroll.line', 'payroll_id')
-    
-    f_mnth = fields.Selection([('january','January'),('february','February'),
-                              ('march','March'),('april','April'),('may','May'),
-                             ('june','June'),('july','July'),('august','August'),
-                             ('september','September'),('october','October'),
-                             ('november','November'),('december','December')],
-                             string='Month', required=True, default='january')
-    payroll_total = fields.Float(compute='compute_payroll_total', string='Total', store=True)
+    f_mnth = fields.Char('Month',required=True, readonly=True, store=True, default=date.today().strftime('%B'))
+    pay_year = fields.Char('Year',required=True, readonly=True, store=True, default=date.today().strftime('%Y'))
+    payroll_total = fields.Float(compute='compute_payroll_total',digits=(9, 2), string='Total', store=True)
     @api.one
     @api.depends('payroll_line_ids.line_total')
     def compute_payroll_total(self):
         self.payroll_total = sum(line.line_total for line in self.payroll_line_ids)
     
-    top_name = fields.Char(compute='get_month', store=True)
+    top_name = fields.Char(compute='get_top_name', store=True)
     @api.one
-    @api.depends('f_mnth')
-    def get_month(self):
-#        if self.f_month in self:
-        for record in self:
-            record.top_name = record.f_mnth.title() + ' Record'
+    @api.depends('f_mnth','name')
+    def get_top_name(self):
+        if (self.f_mnth and self.name):            
+            self.top_name = self.f_mnth.upper() + ' Record' + ' for ' + self.name.name
+        else:
+            self.top_name = date.today().strftime('%B') + ' Payslip '
     
-    line_total = fields.Float(related='payroll_line_ids.line_total', string='Line Total',
+    line_total = fields.Float(related='payroll_line_ids.line_total',digits=(9, 2), string='Line Total',
                             store=True, readonly=True)
     
     job_title = fields.Char(compute='get_job_title', string="Job Title")
     @api.one
     @api.depends('name')
     def get_job_title(self):
-        for record in self:
-            record.job_title = record.name.job_id.name
+        self.job_title = self.name.job_id.name
     
     bank_account = fields.Char(compute='get_bank_account', string="Bank Account")
     
     @api.one
     @api.depends('name')
     def get_bank_account(self):
-        for record in self:
-            record.bank_account = record.name.bank_account_id.acc_number
+        self.bank_account = self.name.bank_account_id.acc_number
     
-                
+    @api.one
+    @api.depends('start_date','end_date')
+    def get_workdays(self):
+        _logger.info("LOGGING get_workdays Start and End dates|%s|%s", self.start_date,self.end_date)
+        fmt = '%Y-%m-%d'
+        workdays = datetime.datetime.strptime(self.end_date, fmt) - datetime.datetime.strptime(self.start_date, fmt)          
+        sundays = workdays.days / 7 
+        self.work_days_tot = workdays.days - sundays
+                    
 class fido_payroll_item(models.Model):
     _name = "fido.payroll.item"
     _description = "Fido Payroll Items"
@@ -81,8 +91,7 @@ class fido_payroll_line(models.Model):
     payroll_id = fields.Many2one('fido.payroll', string='Fido Reference')
 #  Fields for Bags, disp and crates sold totals
     
-#    fido_date = fields.Date(default=fields.Date.today(), required=True)
-    # base_salary pick from staff record
+# base_salary pick from staff record
 #  Each line is for a payroll commission item
 # Items vary and can be bags, dispensers, crates
 # See Model payroll items
@@ -101,10 +110,8 @@ class fido_payroll_line(models.Model):
         
         contract_obj = self.env['hr.contract']
         bagger_obj = self.env['fido.bagger']
-#         account_invoice_obj = self.pool.get('account.invoice.report')
         account_invoice_obj = self.env['account.invoice.report']
                 
-        _logger.info("*** LOGGING Self Count|self  = %i|%s ",len(self),self)
         product_1 = "PUREWATER"
         product_2 = "DISPENSER"
         product_3 = "BOTTLE CRATES"
@@ -112,10 +119,13 @@ class fido_payroll_line(models.Model):
         self.item_mult = 0
         begin_date = self.payroll_id.start_date
         end_date = self.payroll_id.end_date
+#         This assumes Payroll are prepared latest end of month
+        month_f_end_date = datetime.datetime.strftime(date.today(), '%B').lower()
+        total_work_days = self.payroll_id.work_days_tot
+        
         clause_contract =  [('employee_id', '=', self.payroll_id.name.id)]
         contract_ids = contract_obj.search(clause_contract)
-            
-        _logger.info("*** LOGGING Item_id.name = %s ",self.item_id.name)
+        
         if self.item_id.name == 'Bags Sales Commission':
             _logger.info("*** LOGGING Processing  = %s ",self.item_id.name)
             gotten_fields = account_invoice_obj.search([('date','>=',begin_date),('date','<=',end_date),
@@ -156,10 +166,11 @@ class fido_payroll_line(models.Model):
             return
         if self.item_id.name == 'Bagging Commission':  
             _logger.info("*** LOGGING Processing  %s for %s for Month %s",self.item_id.name,self.payroll_id.name.name,self.payroll_id.f_mnth)  
-            bclause_final =  [('name.name', '=', self.payroll_id.name.name),('x_month', '=', self.payroll_id.f_mnth)]
+            bclause_final =  [('name.name', '=', self.payroll_id.name.name),('x_month', '=', month_f_end_date)]
              
             bagger_ids = bagger_obj.search(bclause_final)
             for bagger in bagger_ids:
+                _logger.info("*** LOGGING Processing  bagger ids len %s bagger Month: %s Derived month %s",len(bagger_ids),bagger.x_month,month_f_end_date)
                 self.item_qty = bagger.qty_total               
 #                 Get from the employee Contract.                    
             for contract in contract_ids:
@@ -192,6 +203,20 @@ class fido_payroll_line(models.Model):
 #                 Get from the employee Contract.                
             for contract in contract_ids:
                 self.item_mult = contract.payee
+            return
+        if self.item_id.name == 'Absentee Deductions':
+            _logger.info("*** LOGGING Processing  = %s ",self.item_id.name)
+            self.item_qty = -1
+#                 Get from the employee Contract.                
+            for contract in contract_ids:        
+                _logger.info("*** LOGGING Processing Total Work_days = %s ",self.payroll_id.work_days_tot)
+                _logger.info("*** LOGGING Processing  Mulitplier is = %s ",self.item_mult)
+                #if self.payroll_id.work_days_tot != 0:
+                try:       
+                    self.item_mult = (contract.days_absent / float(total_work_days)) * contract.wage
+                except ZeroDivisionError:
+                    _logger.exception("division by zero error work days total")
+                
             return
             
                
