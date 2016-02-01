@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+     <!-- TOP MENU -->
+        <menuitem id="main_fido_menu" name="FIDO" />
+
+        <!-- SUB MENU -->
+        <menuitem id="fido_menu" name="Fido Factory"
+            parent="main_fido_menu" />
+        <!-- Fido Base Form -->
+        <record id ="fidototals_menu_action" model="ir.actions.act_window">
+            <field name="name">Fido Totaks</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">fido.totals</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> Click create to add new Fido Totals records.</p>
+            </field>
+        </record>
+        
+        
+        <!-- Fido extended Form -->
+        <record id="fido_totals_form_view" model="ir.ui.view">
+            <field name="name">fido_totals_form_view</field>
+            <field name="view_type">form</field>
+            <field name="model">fido.totals</field>
+            <field name="arch" type="xml">
+                <form string="Fido Totals">
+                    <sheet>
+                        <h1 class="mt0">
+                        <field name="top_name" readonly="1" class="oe_inline, oe_read_only"/>
+                        </h1>
+                        <group col="2" string=" ">
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        
+                        </group>
+                        
+                        <group string="Report Details">
+                        <notebook colspan="2">
+                        <page name="fido_totals" string="Fido Totals">
+                                <tree string="FIDO REPORT DETAILS" editable="bottom">
+                                   <field name="id"/>
+                                    <field name="disp_product"/>
+                                    
+                                    <field name="disp_totals"/>
+                                    <field name="pwater_product"/>
+                                    <field name="pwater_totals"/>
+                                    <field name="crate_product"/>
+                                    <field name="crate_totals"/>
+                                    <field name="bag_product"/>
+                                    <field name="bag_totals"/>                                
+                                    
+                                    
+                                    
+                                </tree>
+                            
+                            
+                        </page>
+                        
+                        
+                        </notebook>
+                        </group>
+                    
+                        
+                        
+                        
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Payroll extended Tree Form -->
+        <record id="fido_totals_tree_view" model="ir.ui.view">
+            <field name="name">fido_totals_tree_view</field>
+            <field name="view_type">tree</field>
+            <field name="model">fido.totals</field>
+            <field name="arch" type="xml">
+                <tree string="Fido Totals">
+                    <field name="id"/>
+                    <field name="disp_product"/>
+                                    
+                    <field name="disp_totals"/>
+                    <field name="pwater_product"/>
+                    <field name="pwater_totals"/>
+                    <field name="crate_product"/>
+                    <field name="crate_totals"/>
+                    <field name="bag_product"/>
+                    <field name="bag_totals"/>                                
+                </tree>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="fidototals_search_view">
+            <field name="name">fido.totals.search.view</field>
+            <field name="model">fido.totals</field>
+            <field name="arch" type="xml">
+                <search string="Fido Totals Records">
+                        <field name="product"/>
+                        <field name="month"/>
+                        <field name="product_total"/>
+                    <group expand="0" string="Group By" >
+                        <filter string="Month" name="Responsible" context="{'group_by':'month'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+        
+        <!-- Menu Item for Fido Totals-->
+        <menuitem id="fidototals_menu" 
+            name="Fido Factory Reports" 
+            parent="fido_menu"
+            action="fido_totals_menu_action" sequence="2"
+            groups="base.group_hr_manager,base.group_configuration" />
+
+    </data>
+</openerp>

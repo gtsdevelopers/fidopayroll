@@ -29,7 +29,7 @@
                 <field name="loan_adv" position="after">
                     <field name="payee"/>
                 </field>
-                 <field name="payee" position="after">
+                <field name="payee" position="after">
                     <field name="days_absent"/>
                 </field>
                 

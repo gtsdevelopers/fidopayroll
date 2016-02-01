@@ -9,6 +9,7 @@
 			<field name="res_model">fido.payroll</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
+			<field name="limit">150</field>
 			<field name="help" type="html">
 				<p class="oe_view_nocontent_create"> Click create to add new Payroll records.</p>
 			</field>
@@ -22,6 +23,10 @@
 			<field name="model">fido.payroll</field>
 			<field name="arch" type="xml">
 				<form string="Payroll">
+				<!-- <header>
+                    <button string="Compute Sheet" name="create_payslip" type="object"  class="oe_highlight"/>
+                   
+                </header> -->
 					<sheet>
 						<h1 class="mt0">
                         <field name="top_name" readonly="1" class="oe_inline, oe_read_only"/>
@@ -29,6 +34,7 @@
 						<group col="2" string=" ">
 							<field name="name" colspan="2" />
 							<field name="f_mnth"/>
+							<field name="payroll_ref"/>
 						
 							<field name="start_date"/>
                             <field name="end_date"/>
@@ -40,7 +46,7 @@
 						<notebook colspan="2">
                         <page  name="payslip_items" string="Payslip Items">
                             <field name="payroll_line_ids" nolabel="1" widget="one2many_list">
-                                <tree string="Payroll Lines" editable="bottom">
+                                <tree string="Payroll Lines" create="false" editable="bottom">
                                    <field name="item_id"/>
                                     <field name="item_qty"/>
                                     
@@ -48,11 +54,21 @@
                                     <field name="line_total"/>
                                     
 								</tree>
+								
 							</field>
 							<group class="oe_subtotal_footer oe_right">
 									<field name="payroll_total"/>
                         	</group>
 						</page>
+						<page name="absentee_record" string="Absentee Record">
+						  <group string="Absentee Days">
+                            <field name="absent_days" string='Absent Days' readonly="1"/>
+                          </group>
+                          <div colspan="4">
+                            <field name="note" placeholder="Add an internal note..."/>
+                          </div>												      
+                        </page>
+                        
 						<page name="note" string="Notes">
                                <h3> <field name="note" placeholder="Notes..."/></h3>
                         </page>
@@ -71,13 +87,19 @@
 			<field name="model">fido.payroll</field>
 			<field name="arch" type="xml">
 				<tree string="Fido Payroll">
-						<field name="name"/>
-						<field name="job_title"/>
-						<field name="bank_account"/>
-						<field name="f_mnth"/>
-						
-						<field name="payroll_total" sum="Payroll Total" type="char"/>
-						
+				    <field name="id"/> 
+				    <field name="name"/>
+                    <field name="job_title"/>
+                    <field name="phone"/>
+				    <field name="create_date"/>
+				    <field name="__last_update"/>
+				    <field name="create_uid"/>
+					
+					<field name="start_date"/>
+					<field name="end_date"/>
+					<field name="absent_days" type="char"/>
+					<field name="bank_account"/>						
+					<field name="payroll_total" sum="Payroll Total" />
 				</tree>
 			</field>
 		</record>

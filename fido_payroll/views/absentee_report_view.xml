@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-        <!-- Print Report for Fido Payroll List View -->
+        <!-- Print Absentee Report for Fido Payroll List View -->
         
         <!-- Main template -->
-        <template id="payrollreport">
+        <template id="absenteereport">
             <t t-call="report.html_container">
             <t t-call="report.external_layout">
-            <t t-set="payroll_total" t-value="0.0"/>
-            <t t-set="sn" t-value="1"/>
+            
             <div class="oe_structure"/>
             <div class="page">
                 
-                <h2> Fido Payroll Report for <span t-field="docs[0].f_mnth"/>, <span t-field="docs[0].pay_year"/></h2>
-                <h3> Payroll Period <span t-field="docs[0].start_date"/> - <span t-field="docs[0].end_date"/> </h3>
-                
+                <h2> FIDO Absentee Report for <span t-field="docs[0].f_mnth"/>, <span t-field="docs[0].pay_year"/></h2>
+                <h3> Payroll Period <span t-field="docs[0].start_date"/> TO <span t-field="docs[0].end_date"/></h3>
                 
                 <table class="table table-condensed" border="1">
                        <thead>
@@ -22,29 +20,27 @@
                                 <th>SN</th>
                                 <th class="text-left">Name</th>
                                 <th class="text-left">Job_Title</th>
-                                
-                                <th class="text-left">Period Start</th>
-                                <th class="text-left">Period End</th>
-                                <th class="text-left">Absent Days</th>
-                                <th class="text-left">Account No</th>
-                                <th class="text-left">Net Amount</th> 
+                                <th class="text-left">Begin Day</th>
+                                <th class="text-left">End Day</th>
+                                <th class="text-left">Days Absent</th>
+                               
                                 
                             </tr>
                        </thead>
                            
                            
                     <t t-foreach="docs" t-as="doc">
-                        <t t-set="payroll_total" t-value="payroll_total+doc.payroll_total"/>
+                         
                     <div class="row">
                         
                         
                         <tbody class="report_tbody">
                            
-                                
-                                    <tr t-if="doc.id">
+                                <t t-if="doc.id">
+                                    <tr t-if="doc_index" >
+                                    
                                         <td class="text-left">
-                                        
-                                          <span t-esc="sn"/>
+                                           <span  t-field="doc.id"/>
                                         </td>
                                         <td class="text-left">
                                            <span  t-field="doc.name"/>
@@ -52,32 +48,27 @@
                                         <td class="text-left">
                                            <span t-field="doc.job_title"/>
                                         </td>
-                                       
                                         <td class="text-left">
                                             <span t-field="doc.start_date"/>
+                                            
                                         </td>
                                         <td class="text-left">
                                             <span t-field="doc.end_date"/>
                                         </td>
-                                         <td class="text-left">
+                                        
+                                        <td class="text-left">
                                             <span t-field="doc.absent_days"/>
                                         </td>
-                                         <td class="text-left">
-                                            <span t-field="doc.bank_account"/>
-                                            
-                                        </td>
-                                        <td class="text-left">
-                                            <span t-field="doc.payroll_total"/>
-                                        </td>
-                                          <t t-set="sn" t-value="sn+1"/>
+                                        
                                     </tr>
+                                    </t>
                                 
                         </tbody>
                         
                     </div> <!-- Row DiV -->
                     </t> <!-- foreach docs t -->
                 </table>
-                <h3>PAYROLL TOTAL FOR MONTH = <t t-esc="payroll_total"/></h3>
+                
                 <div class="oe_structure"/>
             </div> <!-- Page DIV -->
             </t>

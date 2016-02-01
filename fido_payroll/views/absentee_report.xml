@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <!-- Absentee Report for Fido Payroll List View -->
+
+        <report
+            id="fido_payroll_absenteereport_action"
+            model="fido.payroll"
+            string="ABSENTEE REPORT for FIDO"
+            report_type="qweb-pdf"
+            name="fido_payroll.absenteereport"
+            file="fido_payroll.absenteereport"
+            
+  
+        />
+
+    </data>
+</openerp>
