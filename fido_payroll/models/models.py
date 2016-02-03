@@ -11,7 +11,7 @@ _logger = logging.getLogger(__name__)
 # _logger.info should be inside function
 class hr_contract(models.Model):
     _inherit = 'hr.contract'
-    _description = 'Extends hr.contract to add these fields'
+    _description = 'Extends hr.contract to add new fields'
     bagged_mult = fields.Float('Bagged Multiplier', digits=(5, 2), required=True, default=2,
                                help="Multiplier for Bagger Commission. Varies per Bagger")
     bagsold_mult = fields.Float('Bags Sold Multiplier', digits=(5, 2), required=True, default=1,
@@ -32,8 +32,9 @@ class hr_contract(models.Model):
     
 class fido_payroll(models.Model):
     _name = "fido.payroll"
+    _inherit = 'mail.thread'
     _description = 'Fido Payroll Architecture'
-    name = fields.Many2one('hr.employee',string='Payroll Staff', size=32, required=True)
+    name = fields.Many2one('hr.employee', string='Payroll Staff', domain="[('company_id','=','FIDO PRODUCING LTD')]", required=True)
     phone = fields.Char(related='name.mobile_phone',store=True)
     start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
     end_date = fields.Date('Date End',default=date.today())
@@ -58,9 +59,12 @@ class fido_payroll(models.Model):
 
     @api.one
     @api.constrains('start_date', 'end_date')
-    def _check_dates(self):
+    def _check_valids(self):
         if self.start_date > self.end_date:
             raise ValidationError("Field start_date must be before end_date")
+        clause = [('payroll_ref', '=', self.payroll_ref)]
+        if self.search(clause):
+            raise ValidationError("Payroll Already Created for this staff, Delete First")
     
     @api.one
     @api.depends('name')
@@ -92,6 +96,7 @@ class fido_payroll(models.Model):
         workdays = datetime.datetime.strptime(self.end_date, fmt) - datetime.datetime.strptime(self.start_date, fmt)          
         sundays = workdays.days / 7 
         self.work_days_tot = workdays.days - sundays
+        self.payroll_ref =  'Payslip/' + str(self.name.name) + '/' + str(self.f_mnth)
 
     @api.one
     @api.depends('name','start_date','end_date')
@@ -151,7 +156,7 @@ class fido_payroll(models.Model):
 #         This assumes Payroll are prepared latest end of month
         month_f_end_date = datetime.datetime.strftime(date.today(), '%B').lower()
         total_work_days = self.work_days_tot
-        self.payroll_ref =  'Payslip/' + str(self.name.name) + '/' + str(self.f_mnth) + '/' + str(self.id)
+         
         
         self.item_qty = 0
         self.item_mult = 0
@@ -232,6 +237,7 @@ class fido_payroll_item(models.Model):
 
 class fido_payroll_line(models.Model):
     _name = "fido.payroll.line"
+    _description = "Fido Payroll lines"
     payroll_id = fields.Many2one('fido.payroll', string='Fido Reference')
 #  Fields for Bags, disp and crates sold totals
     
@@ -249,6 +255,7 @@ class fido_payroll_line(models.Model):
 class fido_payroll_employee_inherit(models.Model):
     _inherit ='hr.employee'
     _name = 'hr.employee'
+    _description = "Fido Payroll Inherits from hr.employee to add payroll counts"
     pay_log = fields.Float(compute='pay_count', string='Fido Slip')
     
     @api.one
