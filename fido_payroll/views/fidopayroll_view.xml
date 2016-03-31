@@ -23,10 +23,17 @@
 			<field name="model">fido.payroll</field>
 			<field name="arch" type="xml">
 				<form string="Payroll">
-				<!-- <header>
-                    <button string="Compute Sheet" name="create_payslip" type="object"  class="oe_highlight"/>
-                   
-                </header> -->
+				<div class="oe_read_only">
+                <header>
+                    <button string="Compute" name="compute" states="draft" class="oe_highlight"/>
+                    <button string="Pay" name="paid" states="compute" class="oe_highlight" />
+                    <button string="Set to Draft" name="draft" states="cancel"/>    
+                    <button string="Cancel" name="cancel" states="draft,compute"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,compute,paid,cancel"/>
+                </header>
+                </div>
+				
+				
 					<sheet>
 						<h1 class="mt0">
                         <field name="top_name" readonly="1" class="oe_inline, oe_read_only"/>
@@ -39,6 +46,8 @@
 							<field name="start_date"/>
                             <field name="end_date"/>
                             <field name="work_days_tot"/>
+                            <!-- <field name="paybatch_id"/> -->
+                            
 						</group>
 						
                  
@@ -78,7 +87,7 @@
 					</sheet>
 					<div class="oe_chatter">
                         <field name="message_follower_ids" widget="mail_followers"/>
-                        <field name="message_ids" widget="mail_thread" options='{"thread_level": 1}'/>
+                        <field name="message_ids" widget="mail_thread"/>
                     </div>
 				</form>
 			</field>
@@ -95,13 +104,15 @@
 				    <field name="name"/>
                     <field name="job_title"/>
                     <field name="phone"/>
-				    <field name="create_date"/>
+				    <!-- <field name="create_date"/> -->
 				    <field name="__last_update"/>
 				    <field name="create_uid"/>
 					
 					<field name="start_date"/>
 					<field name="end_date"/>
 					<field name="absent_days" type="char"/>
+					<field name="grosstot" sum="Gross Total"/>
+					<field name="deductions" sum="Deductions Total"/>
 					<field name="bank_account"/>						
 					<field name="payroll_total" sum="Payroll Total" />
 				</tree>
@@ -136,22 +147,21 @@
 			</field>
 		</record>
 		
-		
-		
 		<!-- Payroll Base Form to display inherited employee on another level after over-riding default employee-->
 		<record id ="fidopayroll_menu_action_default" model="ir.actions.act_window">
 			<field name="name">Employees</field>
 			<field name="res_model">hr.employee</field>
 			<field name="view_mode">kanban,tree,form</field>
 		</record> 
-
 		
-		<!-- Menu Item for bagger -->
+		<!-- Menu Item for Fido Payroll Sub -->
 		<menuitem id="fidopayroll_menu" 
 			name="Fido Payroll" 
 			parent="hr_payroll.menu_hr_payroll_root"
 			action="fidopayroll_menu_action" sequence="9"
 			groups="base.group_hr_manager,base.group_configuration" />
+		
+        	
 
 	</data>
 </openerp>

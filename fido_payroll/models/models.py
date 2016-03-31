@@ -38,25 +38,38 @@ class fido_payroll(models.Model):
     phone = fields.Char(related='name.mobile_phone',store=True)
     start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
     end_date = fields.Date('Date End',default=date.today())
+#     paybatch_id = fields.Many2one('fido.payroll.batch', string='Fido Batch Reference')
         
     work_days_tot = fields.Integer(compute='get_workdays', string='Total Work Days',store=True)
     note = fields.Text(string='Miscellaneous Notes')
     payroll_ref = fields.Char(compute='get_workdays',readonly=True,string='Payroll ID',store=True)
     payroll_line_ids = fields.One2many('fido.payroll.line', 'payroll_id')
     f_mnth = fields.Char('Month',required=True, readonly=True, store=True, default=date.today().strftime('%B'))
-    pay_year = fields.Char('Year',required=True, readonly=True, store=True, default=date.today().strftime('%Y'))
-    payroll_total = fields.Float(compute='create_lines',digits=(9, 2), string='Total', store=True)
+    pay_year = fields.Char('Year', readonly=True, store=True, default=date.today().strftime('%Y'))
+    payroll_total = fields.Float(digits=(9, 2), string="Net Pay")
+    grosstot = fields.Float(digits=(9, 2), string='Gross')
+    deductions = fields.Float(digits=(9, 2), string='Deduction')
     absent_days = fields.Float(compute='get_absentdays',digits=(4,2),string='Absent Days',store=True)
     
     job_title = fields.Char(related='name.job_id.name',store=True)
     
     bank_account = fields.Char(related='name.bank_account_id.acc_number',store=True)
-    item_id = fields.Char(compute='create_lines',string='Item Name',store=True)
-    item_qty = fields.Float(compute='create_lines',string='Qty',store=True)
-    item_mult = fields.Float(compute='create_lines',string='Multiplier',store=True)
-    line_total = fields.Float(compute='create_lines',string='Amount',store=True)
+    item_id = fields.Char(string='Item Name',store=True)
+    item_qty = fields.Float(string='Qty',store=True)
+    item_mult = fields.Float(string='Multiplier',store=True)
+#     line_total = fields.Float(string='Amount',store=True)
     product_cat = fields.Char( string='Product Category')
-
+    state = fields.Selection([
+        ('draft', "DRAFT"),
+        ('compute', "COMPUTE"),
+        ('paid', "PAID"),
+        ('cancel', "CANCEL"),
+    ],string='Status', readonly=True, copy=False, index=True,track_visibility='onchange', default='draft',
+        help='* When the record is created the status is \'Draft\'.\
+            \n* If the Record is Coomputed, the status is \'Compute\'. \
+            \n* If the Record is Paid then status is set to \'Paid\'.\
+            \n* When user cancel Record the status is change to either Draft or Sent depending on previous state ')
+        
     @api.one
     @api.constrains('start_date', 'end_date')
     def _check_valids(self):
@@ -87,6 +100,7 @@ class fido_payroll(models.Model):
             self.top_name = self.f_mnth.upper() + ' Record' + ' for ' + self.name.name
         else:
             self.top_name = date.today().strftime('%B') + ' Payslip '
+            
        
     @api.one
     @api.depends('name','start_date','end_date')
@@ -94,140 +108,277 @@ class fido_payroll(models.Model):
         
         fmt = '%Y-%m-%d'
         workdays = datetime.datetime.strptime(self.end_date, fmt) - datetime.datetime.strptime(self.start_date, fmt)          
-        sundays = workdays.days / 7 
-        self.work_days_tot = workdays.days - sundays
+        sundays = workdays.days / 7
+        pdayofwk = datetime.datetime.strptime(self.end_date, fmt)
+        spdayofwk = datetime.datetime.strptime(self.start_date, fmt)
+        edayofwk = datetime.datetime.strftime(pdayofwk, '%A') 
+        sdayofwk = datetime.datetime.strftime(spdayofwk, '%A')
+        # if end_date is not sunday, add 1
+        if  edayofwk == 'Sunday' or sdayofwk == 'Sunday':
+            self.work_days_tot = workdays.days - sundays
+        else:
+            self.work_days_tot = workdays.days - sundays  + 1
+        
         self.payroll_ref =  'Payslip/' + str(self.name.name) + '/' + str(self.f_mnth)
 
     @api.one
     @api.depends('name','start_date','end_date')
-    def get_invoice_totals(self):
+    def get_invoice_totals(self,empnameidname):
         
         account_invoice_obj = self.env['account.invoice.report']
-        clause = [('date','>=',self.start_date),('date','<=',self.end_date),
-                    ('categ_id.name','=',self.product_cat),('user_id.name','=', self.name.user_id.name)]
+        clause = [('date','>=',self.start_date),('date','<=',self.end_date),('categ_id.name','=',self.product_cat),('user_id.name','=', empnameidname)]
         gotten_fields = account_invoice_obj.search(clause)
+        _logger.info("*** LOGGING Processing INVOICE ids len %i, CATEG %s",len(gotten_fields), self.product_cat)
         total=0.0
         for account_invoice in gotten_fields:
             total += account_invoice.product_qty
         self.item_qty = total
     
-    @api.one
-    @api.depends('name')
-    def get_bagger_totals(self):
-        bagger_obj = self.env['fido.bagger']
-        month_f_end_date = datetime.datetime.strftime(date.today(), '%B').lower()
-        clause =  [('name.name', '=', self.name.name),('x_month', '=', self.f_mnth)]
-        _logger.info("*** LOGGING Processing  bagger Derived month %s",month_f_end_date)
-        bagger_ids = bagger_obj.search(clause)
-        total = 0.0
-        self.item_qty = 0.0
-        for bagger in bagger_ids:
-            self.item_qty = bagger.qty_total
-            _logger.info("*** LOGGING Processing  bagger totl  %s bagger Month: %s Derived month %s",bagger.qty_total,bagger.x_month,month_f_end_date)           
-    #                 Get from the employee Contract.        
-        
-    @api.one
-    @api.depends('name','start_date','end_date')
-    def create_lines(self):
-        item_obj = self.env['fido.payroll.item']
-        itemid = item_obj.search([])    
-        for item in itemid:
-            _logger.info("*** LOGGING Processing CREATE_LINES ITEM.Name %s ",item.name)
-           # self.item_id = item.name
-            self.set_items(item.name)
-            self.line_total = self.item_qty * self.item_mult
-            self.payroll_total += self.line_total       
-            _logger.info("*** LOGGING Processing CREATE_LINES ITEM ID %s ",self.item_id)
-            self.env['fido.payroll.line'].create({'payroll_id':self.id,'item_id':self.item_id,'item_qty':self.item_qty,'item_mult':self.item_mult,'line_total':self.line_total})
-            self.line_total = 0.0
-          
-    
-    @api.multi
-    @api.depends('name','start_date','end_date')
-    def set_items(self,item_id):        
-        
+    def get_contract(self,empid):
         contract_obj = self.env['hr.contract']
-        clause_contract =  [('employee_id', '=', self.name.id)]
+        clause_contract =  [('employee_id', '=', empid)]
         contract_ids = contract_obj.search(clause_contract)
-                
-        begin_date = self.start_date
-        end_date = self.end_date
+        return contract_ids
         
-#         This assumes Payroll are prepared latest end of month
-        month_f_end_date = datetime.datetime.strftime(date.today(), '%B').lower()
-        total_work_days = self.work_days_tot
-         
-        
+    @api.one
+    def get_mult(self,empid,itemid):
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+#         
+        for contract in contract_ids:
+            if itemid == 'Bags Sales Commission':
+                self.item_mult = contract.bagsold_mult
+            elif itemid == 'Crates Sales Commission':
+                self.item_mult = contract.cratesold_mult
+            elif itemid == 'Dispenser Sales Commission':
+                self.item_mult = contract.dispsold_mult
+            
+    
+    @api.one
+    @api.depends('name','start_date','end_date')
+    def get_bagger_totals(self,empid,empname):
         self.item_qty = 0
         self.item_mult = 0
-        self.line_total = 0
-        self.item_id = item_id
-        # self.item_id = item_id
-        if self.item_id == 'Bags Sales Commission':            
-            self.product_cat = 'PUREWATER'
-            self.get_invoice_totals()
-    #                 Get from the employee Contract.
+        bagger_obj = self.env['fido.bagger']
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+#         month_f_end_date = datetime.datetime.strftime(date.today(), '%B').lower()
+        month_f_end_date = self.f_mnth.lower()
+        _logger.info("*** LOGGING Processing BAGGER MONTH %s",month_f_end_date)
+        clause =  [('name.name', '=', empname),('x_month', '=', month_f_end_date)]
+        bagger_ids = bagger_obj.search(clause)
+        _logger.info("*** LOGGING Processing LEN BAGGER ids %s",len(bagger_ids))
+        if len(contract_ids) > 0:
             for contract in contract_ids:
-                self.item_mult = contract.bagsold_mult
-          
-        elif self.item_id == 'Dispenser Sales Commission':
-            self.product_cat = 'DISPENSER'
-            self.get_invoice_totals()
-    #                 Get from the employee Contract.                
-            for contract in contract_ids:
-                self.item_mult = contract.dispsold_mult
-          
-        elif self.item_id == 'Crates Sales Commission':
-            self.product_cat = 'BOTTLE CRATES'
-            self.get_invoice_totals()
-                    
-            for contract in contract_ids:
-                self.item_mult = contract.cratesold_mult
-          
-        elif self.item_id == 'Bagging Commission':  
-            self.get_bagger_totals()                                
-            for contract in contract_ids:                
                 self.item_mult = contract.bagged_mult
-          
-                
-        elif self.item_id == 'Salary Advance Deduction(-ve)':
-            _logger.info("*** LOGGING Processing  %s ",self.item_id)
-            self.item_qty = -1
-    #                 Get from the employee Contract.                
-            for contract in contract_ids:
-                self.item_mult = contract.sal_adv
-        elif self.item_id == 'Base Salary':
-            _logger.info("*** LOGGING Processing %s of %s for month %s  ",self.item_id,self.name.name,self.f_mnth)
-            self.item_mult = 1
-                    
-            for contract in contract_ids:
+        if len(bagger_ids) > 0:
+            for bagger in bagger_ids:            
+                self.item_qty = bagger.qty_total
+                _logger.info("*** LOGGING Processing BAGGER TOTALs %s",bagger.qty_total)
+            
+            
+    @api.one    
+    def get_wage(self,empid):
+        contract_ids = self.get_contract(empid)
+        
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        for contract in contract_ids:
+            if contract.date_end and contract.date_end <= self.start_date:
+                self.item_qty = 0
+                self.item_mult = 0
+            else:
                 self.item_qty = contract.wage
-                
-        elif self.item_id == 'Loan Advance Deduction(-ve)':
-            _logger.info("*** LOGGING Processing  = %s ",self.item_id)
+                self.item_mult = 1
+            
+    @api.one   
+    def get_loan(self,empid):
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        for contract in contract_ids:
             self.item_qty = -1
-    #                 Get from the employee Contract.                
-            for contract in contract_ids:
-                self.item_mult = contract.loan_adv
-                
-        elif self.item_id == 'PAYEE TAX Deduction(-ve)':
-            _logger.info("*** LOGGING Processing  = %s ",self.item_id)
+            self.item_mult = contract.loan_adv
+            
+    @api.one    
+    def get_sal(self,empid):
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        for contract in contract_ids:
             self.item_qty = -1
-    #                 Get from the employee Contract.                
-            for contract in contract_ids:
-                self.item_mult = contract.payee
-                
-        elif self.item_id == 'Absentee Deductions':
-            _logger.info("*** LOGGING Processing  = %s ",self.item_id)
+            self.item_mult = contract.sal_adv
+
+    @api.one    
+    def get_tax(self,empid):
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        for contract in contract_ids:
             self.item_qty = -1
-    #                 Get from the employee Contract.                
-            for contract in contract_ids:        
-                _logger.info("*** LOGGING Processing  Mulitplier is = %s ",self.item_mult)
-                    #if self.payroll_id.work_days_tot != 0:
+            self.item_mult = contract.payee
+    
+    @api.one    
+    def get_bag_mult(self,empid):
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        for contract in contract_ids:
+            self.item_mult = contract.bagged_mult
+    
+    
+    @api.one    
+    def get_absentee(self,empid):
+        contract_ids = self.get_contract(empid)
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        self.item_qty = -1
+        for contract in contract_ids:
+            if contract.date_end and contract.date_end <= self.start_date:
+                self.item_qty = 0
+                self.item_mult = 0        
+            else:
                 try:       
-                    self.item_mult = (contract.days_absent / float(total_work_days)) * contract.wage
+                    self.item_mult = (contract.days_absent / float(self.work_days_tot)) * contract.wage
                 except ZeroDivisionError:
                     _logger.exception("division by zero error work days total")
+    
+    @api.one
+    @api.depends('name','start_date', 'end_date')
+    def create_payslip(self):
+        self.create_lines(self.name.id,self.name.name,self.name.user_id.name,self.f_mnth,self.work_days_tot)
+        
+    @api.multi 
+    def computesheet(self, context=None):
+        #_logger.info("login user is %s",self.user_id.login)
+        self.create_payslip()
+        return self.write({'state': 'compute'})        
+        
+    
+    # state after Payroll is paid
+    @api.multi 
+    def pay(self, context=None):
+        #_logger.info("login user is %s",self.user_id.login)
+        
+#         if (self.env.user.login == 'admin' or self.env.user.login == 'odia.gabriel@gtsng.com'):
+#             _logger.info("PAYING BY %s",self.env.user.login)
+#             self.pay_slip() # to xfer from bank to salary journal with staff name in memo
+#             return self.write({'state': 'paid'})        
+#         raise UserError(_('SORRY: Only MD or DMD Can Pay'))
+#         return False
+        self.pay_slip()
+        return self.write({'state': 'paid'})
+#         
+    
+    @api.multi 
+    def pay_slip(self, context=None):
+        # to xfer from bank to salary journal with staff name in memo
+        
+        """ Create a transfer from a FPL850 Bank Account to Salary journal """
+        payment_model = self.env['account.payment']
+        currency_ngn_id = self.env.ref("base.NGN").id
+        _logger.info("**** base.NGN.id %s",currency_ngn_id)
+        source_journal = self.env['account.journal'].search([('name', '=','FPL8520')])
+        _logger.info("**** Source Journal %s",source_journal)
+        salary_journal = self.env['account.journal'].search([('name', '=','Salary Journal')])
+        _logger.info("**** Salary Journal %s",salary_journal)
+        payment_method = self.env.ref("account.account_payment_method_manual_out")
+        _logger.info("**** Payment Method %s",payment_method)
+        memo = self.name.name + ' Payslip for ' + self.f_mnth
+        payment = payment_model.create({
+                            
+            'payment_date': time.strftime('%Y-%m-%d'),
+            'payment_type': 'transfer',
+            
+            'communication': memo,
+            'amount': self.payroll_total,
+            'currency_id': currency_ngn_id,
+            'journal_id': source_journal.id,
+            'destination_journal_id': salary_journal.id,
+            'payment_method_id': payment_method.id,
+        })
+        payment.post()                
+        return True
+            
+    @api.one
+#     @api.depends('name','start_date','end_date')
+    def create_lines(self,empid,empname,empnameidname,month,workdaystot):
+        item_obj = self.env['fido.payroll.item']
+        itemid = item_obj.search([])    
+#         empid = self.name.id
+#         empname = self.name.name
+#         empnameidname = self.name.user_id.name
+        deduct = 0
+        for item in itemid:
+
+            self.set_items(item.name,empid,empname,empnameidname,month, workdaystot)
+            item_id = self.item_id
+            item_qty = self.item_qty
+            item_mult = self.item_mult
+            if (item_qty < 0) or (item_mult < 0):
+                deduct += item_qty * item_mult
+            line_total = item_qty * item_mult
+            self.payroll_total += line_total
+            self.deductions = deduct
+            self.grosstot = self.payroll_total - self.deductions
+            _logger.info("*** MAJOR CREATE_LINE ITEM ID,QTY, MULT for %s %s %s %s",item_id, item_qty, item_mult,empname)
+            self.env['fido.payroll.line'].create({'payroll_id':self.id,'item_id':item_id,'item_qty':item_qty,'item_mult':item_mult,'line_total':line_total})
+#             self.env['fido.payroll.line'].create({'payroll_id':self.id,'item_id':self.item_id,'item_qty':self.item_qty,'item_mult':self.item_mult,'line_total':self.line_total})
+            #self.line_total = 0.0
+    
+    @api.one
+    def set_items(self,item_id,empid,empname,empnameidname,month,workdaystot):        
+        self.item_id = item_id
+        self.item_qty = 0
+        self.item_mult = 0
+               
+        # self.item_id = item_id
+        if item_id == 'Bags Sales Commission':            
+            self.product_cat = 'PUREWATER'
+            _logger.info("*** LOGGING Processing BAGS SALES Entering INVOICE %s ",self.item_id)
+            self.get_invoice_totals(empnameidname)
+            self.get_mult(empid,item_id)    
+          
+        elif item_id == 'Dispenser Sales Commission':
+            self.product_cat = 'DISPENSER'
+            self.get_invoice_totals(empnameidname)
+            self.get_mult(empid,item_id)
+    #       
+        elif item_id == 'Crates Sales Commission':
+            self.product_cat = 'BOTTLE CRATES'
+            self.get_invoice_totals(empnameidname)
+            self.get_mult(empid,item_id)
+        elif item_id == 'Bagging Commission': 
+            self.get_bagger_totals(empid,empname)                                
+                
+        elif item_id == 'Salary Advance Deduction(-ve)':
+            _logger.info("*** LOGGING Processing  %s ",self.item_id)
+            self.get_sal(empid)
+            
+        elif item_id == 'Base Salary':
+            self.get_wage(empid)        
+                
+        elif item_id == 'Loan Advance Deduction(-ve)':
+            _logger.info("*** LOGGING Processing  = %s ",self.item_id)
+            self.get_loan(empid)
+                
+        elif item_id == 'PAYEE TAX Deduction(-ve)':
+            _logger.info("*** LOGGING Processing  = %s ",self.item_id)
+            self.get_tax(empid)
+        elif item_id == 'Absentee Deductions':
+            _logger.info("*** LOGGING Processing  = %s ",self.item_id)
+            self.get_absentee(empid)
+            
                         
 class fido_payroll_item(models.Model):
     _name = "fido.payroll.item"
@@ -251,7 +402,14 @@ class fido_payroll_line(models.Model):
     item_mult = fields.Float(string='Multiplier')
     line_total = fields.Float(string='Amount')
 
-            
+#     @api.one
+#     @api.constrains('item_id')
+#     def _check_valids(self):
+#         clause = [('item_id', '=', self.item_id)]
+#         if self.search(clause):
+#             raise ValidationError("Payroll Line Already added for this staff, Delete First")
+# 
+#             
 class fido_payroll_employee_inherit(models.Model):
     _inherit ='hr.employee'
     _name = 'hr.employee'
@@ -264,3 +422,71 @@ class fido_payroll_employee_inherit(models.Model):
             record_count = self.pool.get('fido.payroll')
             pay_logger = record_count.search(self._cr,self._uid, [('name','=',record.id)])
             record.pay_log = len(pay_logger)
+
+# class account_invoice_inherit(models.Model):
+#     _inherit = 'account.invoice'
+#     _description = 'Changes the link between Customer name and salesperson'
+#     partner_id = fields.Many2one('res.partner', string='Partner', change_default=True,
+#         required=True, readonly=True, states={'draft': [('readonly', False)]},
+#         track_visibility='always')
+#     user_id = fields.Many2one(related='partner_id.user_id',string='Salesperson', track_visibility='onchange',
+#         readonly=True, states={'draft': [('readonly', False)]})
+#     date_invoice = fields.Date(string='Invoice Date',default=date.today(),
+#         readonly=True, states={'draft': [('readonly', False)]}, index=True,
+#         help="Change to correct date.", copy=False)
+
+#     
+
+# class fido_payroll_batch(models.Model):
+#     _name = 'fido.payroll.batch'      
+# #     _inherit = 'fido.payroll'
+#     _description = 'create multiple payslips'
+# #     payslip_ids = fields.One2many('fido.payroll', 'paybatch_id')
+#     name = fields.Char(compute='get_name',readonly=True,string='Batch Name')
+# #     batch_ref = fields.Char(compute='get_name',readonly=True,string='Batch Ref',store=True)
+#     topname = fields.Char(compute='get_name',readonly=True,string='Top Name',store=True)
+#     work_days_tot = fields.Integer(compute='get_name',readonly=True,string='Total Workdays',store=True)
+#     
+#     start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
+#     end_date = fields.Date('Date End',default=date.today())
+#     b_month = fields.Char(string='Month',default=date.today().strftime('%B'))
+#     
+#     @api.one
+#     @api.constrains('start_date', 'end_date')
+#     def _check_valids(self):
+#         if self.start_date > self.end_date:
+#             raise ValidationError("Field start_date must be before end_date")
+#        
+#     @api.one
+#     @api.depends('start_date','end_date')
+#     def get_name(self):       
+#         if (self.b_month):            
+#             self.topname = 'Batch Payroll for ' + str(self.b_month)
+#             self.name = 'Payroll for ' + str(self.b_month) 
+#             self.batch_ref = 'Fido/Payroll/' + str(self.b_month)
+#         else:
+#             self.b_month =  date.today().strftime('%B') 
+#             self.topname = 'Batch Payroll for ' + str(self.b_month)
+#             self.name = 'Payroll for ' + str(self.b_month) 
+#             self.batch_ref = 'Fido/Payroll/' + str(self.b_month)
+#         fmt = '%Y-%m-%d'
+#         workdays = datetime.datetime.strptime(self.end_date, fmt) - datetime.datetime.strptime(self.start_date, fmt)          
+#         sundays = workdays.days / 7 
+#         self.work_days_tot = workdays.days - sundays
+#         
+#     @api.one    
+#     @api.depends('start_date','end_date')
+#     def create_batch(self):
+#         emp_obj = self.env['hr.employee']
+#         for emp in emp_obj.search([]):
+#             _logger.info("*** BATCH Processing  = %s | %s ",emp.name,emp.user_id.name)
+#             self.env['fido.payroll'].create({'paybatch_id':self.id,'name':emp_obj,'start_date':self.start_date,'end_date':self.end_date,'f_mnth':self.b_month})
+#             
+#             _logger.info("*** BATCH Processing  AFTER Create LINES %s ",emp.name)
+#             
+#    
+#         # bagger needs name
+#             
+#     
+#     
+#     

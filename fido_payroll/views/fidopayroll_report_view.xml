@@ -25,8 +25,13 @@
                                 
                                 <th class="text-left">Period Start</th>
                                 <th class="text-left">Period End</th>
+                               
                                 <th class="text-left">Absent Days</th>
+                               
+                                
                                 <th class="text-left">Account No</th>
+                                 <th class="text-left">Gross</th>
+                                  <th class="text-left">Deductions</th>
                                 <th class="text-left">Net Amount</th> 
                                 
                             </tr>
@@ -59,12 +64,21 @@
                                         <td class="text-left">
                                             <span t-field="doc.end_date"/>
                                         </td>
+                                        
                                          <td class="text-left">
                                             <span t-field="doc.absent_days"/>
                                         </td>
+                                        
+                                        
                                          <td class="text-left">
                                             <span t-field="doc.bank_account"/>
                                             
+                                        </td>
+                                        <td class="text-left">
+                                            <span t-field="doc.grosstot"/>
+                                        </td>
+                                        <td class="text-left">
+                                            <span t-field="doc.deductions"/>
                                         </td>
                                         <td class="text-left">
                                             <span t-field="doc.payroll_total"/>

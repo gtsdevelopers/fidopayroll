@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+	
+		
+		<!-- Payroll BATCH Form -->
+        <record id ="fidopayroll_batch_menu_action" model="ir.actions.act_window">
+            <field name="name">Fido BATCH Payroll</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">fido.payroll.batch</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="limit">150</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create"> Click create to add new batch Payroll records.</p>
+            </field>
+        </record>
+        
+		<!-- Payroll extended Form -->
+		<record id="fidopayroll_batch_form_view" model="ir.ui.view">
+			<field name="name">payroll.form.batch.view</field>
+			<field name="view_type">form</field>
+			<field name="model">fido.payroll.batch</field>
+			<field name="arch" type="xml">
+				<form string="Payroll BATCH">
+				<header>
+                    <button string="CREATE BATCH PAYROLL" name="create_batch" type="object"  class="oe_highlight"/>
+                   
+                </header>
+					<sheet>
+						<h1 class="mt0">
+                        <field name="topname" readonly="1" class="oe_inline, oe_read_only"/>
+                    	</h1>
+						<group col="2" string=" ">
+							<!-- <field name="name" colspan="2" /> -->
+							<field name="batch_ref"/>
+							<field name="b_month"/>						
+						
+							<field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="work_days_tot"/>
+                            <!-- <field name="payrollbatch_id"/> -->
+                            
+						</group>
+						
+                 
+						
+					</sheet>
+					
+				</form>
+			</field>
+		</record>
+		<record id="fidopayroll_batch_tree_view" model="ir.ui.view">
+            <field name="name">payroll.batch.tree.view</field>
+            <field name="view_type">tree</field>
+            <field name="model">fido.payroll.batch</field>
+            <field name="arch" type="xml">
+                <tree string="Fido Batch Payroll Tree">
+                    <field name="id"/> 
+                    <field name="name"/>
+                    <field name="batch_ref"/>
+                    <field name="b_month"/>
+                    <field name="create_date"/>
+                    <field name="__last_update"/>
+                    <field name="create_uid"/>
+                    
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                                            
+                    <!-- <field name="payroll_total" sum="Payroll Total" /> -->
+                </tree>
+            </field>
+        </record>
+		
+		
+		<!-- Menu Item for Fido Payroll Batch -->
+        <menuitem id="fidopayroll_batch_menu" 
+            name="Fido Payroll Batch" 
+            parent="hr_payroll.menu_hr_payroll_root"
+            action="fidopayroll_batch_menu_action" sequence="10"
+            groups="base.group_hr_manager,base.group_configuration" />
+        	
+
+	</data>
+</openerp>

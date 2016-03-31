@@ -13,7 +13,9 @@
 	'depends': ['account_accountant','hr','hr_payroll'],
 	'data': ['views/fidopayroll_view.xml','views/fidopayroll_item.xml',
 			'views/fidopayroll_button_view.xml','views/hr_contract_view.xml',
-			'views/fidopayroll_report_view.xml','views/fidopayroll_report.xml'],
+			'views/fidopayroll_report_view.xml','views/fidopayroll_report.xml',
+			'views/fidopayroll_workflow.xml'
+			],
 	'demo': [],
 	'installabe': True,
 	'auto_install': False,
