@@ -44,7 +44,7 @@ class fido_payroll(models.Model):
     note = fields.Text(string='Miscellaneous Notes')
     payroll_ref = fields.Char(compute='get_workdays',readonly=True,string='Payroll ID',store=True)
     payroll_line_ids = fields.One2many('fido.payroll.line', 'payroll_id')
-    f_mnth = fields.Char('Month',required=True, readonly=True, store=True, default=date.today().strftime('%B'))
+    f_mnth = fields.Char(compute='get_month', string='Month', store=True)
     pay_year = fields.Char('Year', readonly=True, store=True, default=date.today().strftime('%Y'))
     payroll_total = fields.Float(digits=(9, 2), string="Net Pay")
     grosstot = fields.Float(digits=(9, 2), string='Gross')
@@ -93,6 +93,7 @@ class fido_payroll(models.Model):
         self.payroll_total = sum(line.line_total for line in self.payroll_line_ids)
     
     top_name = fields.Char(compute='get_top_name', store=True)
+    
     @api.one
     @api.depends('f_mnth','name')
     def get_top_name(self):
@@ -101,6 +102,13 @@ class fido_payroll(models.Model):
         else:
             self.top_name = date.today().strftime('%B') + ' Payslip '
             
+    @api.one
+    @api.depends('name','start_date','end_date')
+    def get_month(self):        
+        fmt = '%Y-%m-%d'
+        pdayofwk = datetime.datetime.strptime(self.end_date, fmt)
+        self.f_mnth = datetime.datetime.strftime(pdayofwk, '%B') 
+        
        
     @api.one
     @api.depends('name','start_date','end_date')
@@ -250,6 +258,7 @@ class fido_payroll(models.Model):
             else:
                 try:       
                     self.item_mult = (contract.days_absent / float(self.work_days_tot)) * contract.wage
+                    self.item_qty = -1
                 except ZeroDivisionError:
                     _logger.exception("division by zero error work days total")
     
