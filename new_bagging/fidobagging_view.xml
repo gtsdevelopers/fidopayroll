@@ -26,7 +26,9 @@
 						<group col="2" string=" ">
 							<field name="name" colspan="2" domain="[('job_id','=','Bagger')]"/>
 							<field name="x_month"/>
+							<field name="x_year"/>
 						</group>
+						
 						<group string="Daily Details">
 						<notebook colspan="2">
                         <page>
@@ -56,6 +58,8 @@
 				<tree string="Bagger">
 						<field name="name"/>
 						<field name="x_month"/>
+						<field name="x_year"/>
+						
 						<field name="qty_total" sum="Total"/>
 				</tree>
 			</field>
@@ -68,9 +72,11 @@
                 <search string="Bagging Records">
                     	<field name="name"/>
 						<field name="x_month"/>
+						<field name="x_year"/>
 						<field name="qty_total"/>
                     <group expand="0" string="Group By" >
                         <filter string="Month" name="Responsible" context="{'group_by':'x_month'}"/>
+                        <filter string="Year" name="Responsible" context="{'group_by':'x_year'}"/>
                         <filter string="Bagger" name="Responsible" context="{'group_by':'name'}"/>
                     </group>
                </search>

@@ -10,14 +10,18 @@ class fido_bagging(models.Model):
 							('august','August'),('september','September'),('october','October'),
 							('november','November'),('december','December')],string='Month', required=True , default='january')
 	qty_total = fields.Float(compute='compute_bagging_total', string='Total')
-	top_name = fields.Char(compute='get_month')
 	
-	@api.one
-	@api.depends('x_month')
-	def get_month(self):
-#		if self.x_month in self:
+	x_year = fields.Selection([('2016','2016'),('2017','2017'),('2018','2018'),
+							('2019','2019'),('2020','2020'),('2021','2021'),('2022','2022'),
+							('2023','2023'),('2024','2024'),('2025','2025'),
+							('2026','2026'),('2027','2027')],string='YEAR', required=True , default='2016')
+	top_name = fields.Char(compute='get_top')
+	
+	@api.depends('x_month','x_year')
+	def get_top(self):
+		# if (self.x_month) in self and (self.x_year in self):
 		for record in self:
-			record.top_name = record.x_month.title() + ' Record'
+			self.top_name = record.x_month.title()  + ' ' + record.x_year  + ' Record '
 		
 	
 	@api.one

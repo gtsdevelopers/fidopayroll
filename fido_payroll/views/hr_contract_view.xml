@@ -10,17 +10,22 @@
                 <xpath expr="//field[@name='wage']" position="after">
                     <field name="bagged_mult" />
                 </xpath>
-                
+                                
                 <field name="bagged_mult" position="after">
-                    <field name="bagsold_mult"/>
-                </field>
-                <field name="bagsold_mult" position="after">
                     <field name="cratesold_mult"/>
                 </field>
                 <field name="cratesold_mult" position="after">
                     <field name="dispsold_mult"/>
                 </field>
                 <field name="dispsold_mult" position="after">
+                    <field name="kpbgsold_mult"/>
+                </field>
+                <field name="kpbgsold_mult" position="after">
+                    <field name="obbgsold_mult"/>
+                </field>
+                
+                
+                <field name="obbgsold_mult" position="after">
                     <field name="sal_adv"/>
                 </field>
                 <field name="sal_adv" position="after">
@@ -31,6 +36,18 @@
                 </field>
                 <field name="payee" position="after">
                     <field name="days_absent"/>
+                </field>
+                <field name="days_absent" position="after">
+                    <field name="kpbg_sold"/>
+                </field>
+                <field name="kpbg_sold" position="after">
+                    <field name="obbg_sold"/>
+                </field>
+                <field name="obbg_sold" position="after">
+                    <field name="disp_sold"/>
+                </field>
+                <field name="disp_sold" position="after">
+                    <field name="crate_sold"/>
                 </field>
                 
             </field>

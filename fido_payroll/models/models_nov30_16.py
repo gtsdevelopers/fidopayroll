@@ -14,26 +14,10 @@ class hr_contract(models.Model):
     _description = 'Extends hr.contract to add new fields'
     bagged_mult = fields.Float('Bagged Multiplier', digits=(5, 2), required=True, default=2,
                                help="Multiplier for Bagger Commission. Varies per Bagger")
-    kpbg_sold = fields.Float('Kpansia Sold Qty', digits=(7,1), required=True, default=0,
-                               help="Quantity Sold This Month")
-    obbg_sold = fields.Float('Obunna Sold Qty', digits=(7,1), required=True, default=0,
-                               help="Obunna Quantity Sold This Month")
-
     bagsold_mult = fields.Float('Bags Sold Multiplier', digits=(5, 2), required=True, default=1,
                                help="Multiplier for Bag Seller Commission. Varies per seller")
-    obbgsold_mult = fields.Float('OB Bags Sold Multiplier', digits=(5, 2), required=True, default=1,
-                               help="Multiplier for Bag Seller Commission. Varies per seller")
-    kpbgsold_mult = fields.Float('KP Bags Sold Multiplier', digits=(5, 2), required=True, default=1,
-                               help="Multiplier for KP Bag Seller Commission. Varies per seller")
-    
     cratesold_mult = fields.Float('Crates Sold Multiplier', digits=(5, 2), required=True, default=5,
                                help="Multiplier for Crates Seller Commission. Varies per seller")
-    crate_sold = fields.Float('Crate Sold Qty', digits=(7,1), required=True, default=0,
-                               help="Crate Quantity Sold This Month")
-    disp_sold = fields.Float('Disp Sold Qty', digits=(7,1), required=True, default=0,
-                               help="Disp Quantity Sold This Month")
-    
-    
     dispsold_mult = fields.Float('Dispenser Sold Multiplier', digits=(5, 2), required=True, default=25,
                                help="Multiplier for Dispenser Seller Commission. Varies per seller")
     sal_adv = fields.Float('Salary Advance Ded', digits=(7, 2), required=True, 
@@ -44,7 +28,6 @@ class hr_contract(models.Model):
                                help="PAYEE TAX. Varies per individual")
     days_absent = fields.Float('Days Absent', digits=(4,2), required=True,
                                help="Days absent from Work in Month. Affects Base Salary")
-    
 
     
 class fido_payroll(models.Model):
@@ -87,12 +70,6 @@ class fido_payroll(models.Model):
             \n* If the Record is Coomputed, the status is \'Compute\'. \
             \n* If the Record is Paid then status is set to \'Paid\'.\
             \n* When user cancel Record the status is change to either Draft or Sent depending on previous state ')
-    
-    x_year = fields.Selection([('2016','2016'),('2017','2017'),('2018','2018'),
-                            ('2019','2019'),('2020','2020'),('2021','2021'),('2022','2022'),
-                            ('2023','2023'),('2024','2024'),('2025','2025'),
-                            ('2026','2026'),('2027','2027')],string='YEAR', required=True , default='2016')
-    
         
     @api.one
     @api.constrains('start_date', 'end_date')
@@ -122,7 +99,7 @@ class fido_payroll(models.Model):
     @api.depends('f_mnth','name')
     def get_top_name(self):
         if (self.f_mnth and self.name):            
-            self.top_name = self.f_mnth.upper() + ' '+ self.x_year + ' Record' + ' for ' + self.name.name
+            self.top_name = self.f_mnth.upper() + ' Record' + ' for ' + self.name.name
         else:
             self.top_name = date.today().strftime('%B') + ' Payslip '
             
@@ -153,12 +130,12 @@ class fido_payroll(models.Model):
         else:
             self.work_days_tot = workdays.days - sundays  + 1
         
-        self.payroll_ref =  'Payslip/' + str(self.name.name) + '/' + str(self.f_mnth) +'/' + self.x_year
+        self.payroll_ref =  'Payslip/' + str(self.name.name) + '/' + str(self.f_mnth)
 
     @api.one
     @api.depends('name','start_date','end_date')
     def get_invoice_totals(self,empnameidname):
-        # Now get from contract
+        
         account_invoice_obj = self.env['account.invoice.report']
         clause = [('date','>=',self.start_date),('date','<=',self.end_date),('categ_id.name','=',self.product_cat),('user_id.name','=', empnameidname)]
         gotten_fields = account_invoice_obj.search(clause)
@@ -173,68 +150,6 @@ class fido_payroll(models.Model):
         clause_contract =  [('employee_id', '=', empid)]
         contract_ids = contract_obj.search(clause_contract)
         return contract_ids
-    
-    @api.one    
-    def get_kpcommission(self,empid):
-        contract_ids = self.get_contract(empid)
-        
-#         contract_obj = self.env['hr.contract']
-#         clause_contract =  [('employee_id', '=', empid)]
-#         contract_ids = contract_obj.search(clause_contract)
-        for contract in contract_ids:
-            if contract.date_end and contract.date_end <= self.start_date:
-                self.item_qty = 0
-                self.item_mult = 0
-            else:
-                self.item_qty = contract.kpbg_sold
-                self.item_mult = contract.kpbgsold_mult
-    
-    @api.one    
-    def get_obcommission(self,empid):
-        contract_ids = self.get_contract(empid)
-        
-#         contract_obj = self.env['hr.contract']
-#         clause_contract =  [('employee_id', '=', empid)]
-#         contract_ids = contract_obj.search(clause_contract)
-        for contract in contract_ids:
-            if contract.date_end and contract.date_end <= self.start_date:
-                self.item_qty = 0
-                self.item_mult = 0
-            else:
-                self.item_qty = contract.obbg_sold
-                self.item_mult = contract.obbgsold_mult
-
-    @api.one    
-    def get_crcommission(self,empid):
-        contract_ids = self.get_contract(empid)
-        
-#         contract_obj = self.env['hr.contract']
-#         clause_contract =  [('employee_id', '=', empid)]
-#         contract_ids = contract_obj.search(clause_contract)
-        for contract in contract_ids:
-            if contract.date_end and contract.date_end <= self.start_date:
-                self.item_qty = 0
-                self.item_mult = 0
-            else:
-                self.item_qty = contract.crate_sold
-                self.item_mult = contract.cratesold_mult
-
-    @api.one    
-    def get_dispcommission(self,empid):
-        contract_ids = self.get_contract(empid)
-        
-#         contract_obj = self.env['hr.contract']
-#         clause_contract =  [('employee_id', '=', empid)]
-#         contract_ids = contract_obj.search(clause_contract)
-        for contract in contract_ids:
-            if contract.date_end and contract.date_end <= self.start_date:
-                self.item_qty = 0
-                self.item_mult = 0
-            else:
-                self.item_qty = contract.disp_sold
-                self.item_mult = contract.dispsold_mult
-
-
         
     @api.one
     def get_mult(self,empid,itemid):
@@ -244,10 +159,8 @@ class fido_payroll(models.Model):
 #         contract_ids = contract_obj.search(clause_contract)
 #         
         for contract in contract_ids:
-            if itemid == 'KP Bags Sales Commission':
-                self.item_mult = contract.kpbgsold_mult
-            elif itemid == 'OB Bags Sales Commission':
-                self.item_mult = contract.obbgsold_mult            
+            if itemid == 'Bags Sales Commission':
+                self.item_mult = contract.bagsold_mult
             elif itemid == 'Crates Sales Commission':
                 self.item_mult = contract.cratesold_mult
             elif itemid == 'Dispenser Sales Commission':
@@ -277,6 +190,7 @@ class fido_payroll(models.Model):
             for bagger in bagger_ids:            
                 self.item_qty = bagger.qty_total
                 _logger.info("*** LOGGING Processing BAGGER TOTALs %s",bagger.qty_total)
+            
             
     @api.one    
     def get_wage(self,empid):
@@ -440,30 +354,25 @@ class fido_payroll(models.Model):
         self.item_id = item_id
         self.item_qty = 0
         self.item_mult = 0
-        
+               
         # self.item_id = item_id
-        if item_id == 'KP Bags Sales Commission':            
+        if item_id == 'Bags Sales Commission':            
             self.product_cat = 'PUREWATER'
-            _logger.info("*** LOGGING Processing  %s ",self.item_id)
-            self.get_kpcommission(empid)
-            
-        elif item_id == 'OB Bags Sales Commission':            
-            self.product_cat = 'PUREWATER'
-            _logger.info("*** LOGGING Processing  %s ",self.item_id)
-            self.get_obcommission(empid)
-            
-        elif item_id == 'Crates Sales Commission':            
+            _logger.info("*** LOGGING Processing BAGS SALES Entering INVOICE %s ",self.item_id)
+            self.get_invoice_totals(empnameidname)
+            self.get_mult(empid,item_id)    
+          
+        elif item_id == 'Dispenser Sales Commission':
+            self.product_cat = 'DISPENSER'
+            self.get_invoice_totals(empnameidname)
+            self.get_mult(empid,item_id)
+    #       
+        elif item_id == 'Crates Sales Commission':
             self.product_cat = 'BOTTLE CRATES'
-            _logger.info("*** LOGGING Processing  %s ",self.item_id)
-            self.get_crcommission(empid)
+            self.get_invoice_totals(empnameidname)
+            self.get_mult(empid,item_id)
         elif item_id == 'Bagging Commission': 
             self.get_bagger_totals(empid,empname)                                
-        
-            
-        elif item_id == 'Dispenser Sales Commission':            
-            self.product_cat = 'DISPENSER'
-            _logger.info("*** LOGGING Processing  %s ",self.item_id)
-            self.get_dispcommission(empid)        
                 
         elif item_id == 'Salary Advance Deduction(-ve)':
             _logger.info("*** LOGGING Processing  %s ",self.item_id)
@@ -479,7 +388,6 @@ class fido_payroll(models.Model):
         elif item_id == 'PAYEE TAX Deduction(-ve)':
             _logger.info("*** LOGGING Processing  = %s ",self.item_id)
             self.get_tax(empid)
-            
         elif item_id == 'Absentee Deductions':
             _logger.info("*** LOGGING Processing  = %s ",self.item_id)
             self.get_absentee(empid)

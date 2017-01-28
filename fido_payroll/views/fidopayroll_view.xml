@@ -41,6 +41,7 @@
 						<group col="2" string=" ">
 							<field name="name" colspan="2" />
 							<field name="f_mnth"/>
+							<field name="x_year"/>
 							<field name="payroll_ref"/>
 						
 							<field name="start_date"/>
@@ -101,6 +102,7 @@
 			<field name="arch" type="xml">
 				<tree string="Fido Payroll">
 				    <field name="id"/> 
+				    <field name="x_year"/>
 				    <field name="name"/>
                     <field name="job_title"/>
                     <field name="phone"/>
@@ -129,6 +131,7 @@
 						<field name="payroll_total" type="char"/>
                     <group expand="0" string="Group By" >
                         <filter string="Month" name="Responsible" context="{'group_by':'f_mnth'}"/>
+                        <filter string="YEAR" name="Responsible" context="{'group_by':'x_year'}"/>
                     </group>
                </search>
             </field>
