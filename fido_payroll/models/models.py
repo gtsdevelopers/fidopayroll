@@ -266,8 +266,9 @@ class fido_payroll(models.Model):
 #         contract_ids = contract_obj.search(clause_contract)
 #         month_f_end_date = datetime.datetime.strftime(date.today(), '%B').lower()
         month_f_end_date = self.f_mnth.lower()
+        theyear = self.x_year
         _logger.info("*** LOGGING Processing BAGGER MONTH %s",month_f_end_date)
-        clause =  [('name.name', '=', empname),('x_month', '=', month_f_end_date)]
+        clause =  [('name.name', '=', empname),('x_month', '=', month_f_end_date),('x_year', '=', theyear)]
         bagger_ids = bagger_obj.search(clause)
         _logger.info("*** LOGGING Processing LEN BAGGER ids %s",len(bagger_ids))
         if len(contract_ids) > 0:
