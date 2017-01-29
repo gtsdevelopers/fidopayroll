@@ -35,9 +35,6 @@
                     <field name="payee"/>
                 </field>
                 <field name="payee" position="after">
-                    <field name="days_absent"/>
-                </field>
-                <field name="days_absent" position="after">
                     <field name="kpbg_sold"/>
                 </field>
                 <field name="kpbg_sold" position="after">
