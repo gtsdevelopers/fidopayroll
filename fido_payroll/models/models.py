@@ -59,7 +59,7 @@ class fido_payroll(models.Model):
         
     work_days_tot = fields.Integer(compute='get_workdays', string='Total Work Days',store=True)
     note = fields.Text(string='Miscellaneous Notes')
-    payroll_ref = fields.Char(compute='get_workdays',readonly=True,string='Payroll ID',store=True)
+    payroll_ref = fields.Char(compute='get_ref',readonly=True,string='Payroll ID',store=True)
     payroll_line_ids = fields.One2many('fido.payroll.line', 'payroll_id')
     f_mnth = fields.Char(compute='get_month', string='Month', store=True)
     
@@ -92,6 +92,8 @@ class fido_payroll(models.Model):
                             ('2019','2019'),('2020','2020'),('2021','2021'),('2022','2022'),
                             ('2023','2023'),('2024','2024'),('2025','2025'),
                             ('2026','2026'),('2027','2027')],string='YEAR', required=True , default='2016')
+    daysabsent = fields.Float('Days Absent_', digits=(4,2), required=True,default='0.0',
+                               help="Days absent from Work in Month. Affects Base Salary")
     
         
     @api.one
@@ -102,6 +104,12 @@ class fido_payroll(models.Model):
         clause = [('payroll_ref', '=', self.payroll_ref)]
         if self.search(clause):
             raise ValidationError("Payroll Already Created for this staff, Delete First")
+        # check if year is current year
+        fmt = '%Y-%m-%d'
+        pdayofwk = datetime.datetime.strptime(self.end_date, fmt)
+        thisyear = datetime.datetime.strftime(pdayofwk, '%Y')
+        if self.x_year != thisyear:
+            raise ValidationError("Year is not this year")
     
     @api.one
     @api.depends('name')
@@ -110,6 +118,12 @@ class fido_payroll(models.Model):
         contract_ids = self.env['hr.contract'].search(clause_contract)
         for contract in contract_ids:
             self.absent_days = contract.days_absent
+            self.absent_days = self.daysabsent
+            """
+            The above needs to be fixed 
+            so reference to contract.days_absent is removed
+            """
+            
     
     @api.one
     @api.depends('payroll_line_ids.line_total')
@@ -152,7 +166,10 @@ class fido_payroll(models.Model):
             self.work_days_tot = workdays.days - sundays
         else:
             self.work_days_tot = workdays.days - sundays  + 1
-        
+    
+    @api.one
+    @api.depends('name','x_year')
+    def get_ref(self):        
         self.payroll_ref =  'Payslip/' + str(self.name.name) + '/' + str(self.f_mnth) +'/' + self.x_year
 
     @api.one
@@ -341,13 +358,18 @@ class fido_payroll(models.Model):
 #         clause_contract =  [('employee_id', '=', empid)]
 #         contract_ids = contract_obj.search(clause_contract)
         self.item_qty = -1
+        _logger.info("*** daysabsent_  = %s ",self.daysabsent)
         for contract in contract_ids:
+            _logger.info("*** Contracttype  = %s ",contract.type_id.name)
+            
+            # if staff is disengaged, no need to compute absentee days
             if contract.date_end and contract.date_end <= self.start_date:
                 self.item_qty = 0
                 self.item_mult = 0        
             else:
                 try:       
-                    self.item_mult = (contract.days_absent / float(self.work_days_tot)) * contract.wage
+                    self.item_mult = (self.daysabsent / float(self.work_days_tot)) * contract.wage
+                    _logger.info("*** absentdays,workdays,wage,ded  = %s %s %s %s ",self.daysabsent,self.work_days_tot,contract.wage,self.item_mult )
                     self.item_qty = -1
                 except ZeroDivisionError:
                     _logger.exception("division by zero error work days total")
