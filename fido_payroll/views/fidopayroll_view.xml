@@ -48,6 +48,7 @@
                         
                             <field name="start_date"/>
                             <field name="end_date"/>
+                            <field name="company"/>
                             <field name="work_days_tot"/>
                             <!-- <field name="paybatch_id"/> -->
                             
@@ -109,8 +110,8 @@
                     <field name="job_title"/>
                     <field name="phone"/>
                     <!-- <field name="create_date"/> -->
-                    <field name="__last_update"/>
-                    <field name="create_uid"/>
+                    <!--<field name="__last_update"/>-->
+                    <field name="company"/>
                     
                     <field name="start_date"/>
                     <field name="end_date"/>
@@ -134,6 +135,7 @@
                     <group expand="0" string="Group By" >
                         <filter string="Month" name="Responsible" context="{'group_by':'f_mnth'}"/>
                         <filter string="YEAR" name="Responsible" context="{'group_by':'x_year'}"/>
+                        <filter string="COMPANY" name="Responsible" context="{'group_by':'company'}"/>
                     </group>
                </search>
             </field>

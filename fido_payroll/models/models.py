@@ -94,6 +94,8 @@ class fido_payroll(models.Model):
                             ('2026','2026'),('2027','2027')],string='YEAR', required=True , default='2016')
     daysabsent = fields.Float('Days Absent_', digits=(4,2), required=True,default='0.0',
                                help="Days absent from Work in Month. Affects Base Salary")
+    company = fields.Selection([('fido1','FIDO WATER KPANSIA'),('fido2','FIDO WATER OBUNNA'),('gts','GTS'),
+                            ('fpl1','FIDO PRODUCING ABUJA')],string='COMPANY', required=True , default='fido1')
     
         
     @api.one
@@ -112,17 +114,17 @@ class fido_payroll(models.Model):
             raise ValidationError("Year is not this year")
     
     @api.one
-    @api.depends('name')
+    @api.depends('name','daysabsent')
     def get_absentdays(self):
-        clause_contract =  [('employee_id', '=', self.name.id)]
-        contract_ids = self.env['hr.contract'].search(clause_contract)
-        for contract in contract_ids:
-            self.absent_days = contract.days_absent
-            self.absent_days = self.daysabsent
-            """
+   #     clause_contract =  [('employee_id', '=', self.name.id)]
+        #contract_ids = self.env['hr.contract'].search(clause_contract)
+        #for contract in contract_ids:
+         #   self.absent_days = contract.days_absent
+        self.absent_days = self.daysabsent
+        """
             The above needs to be fixed 
             so reference to contract.days_absent is removed
-            """
+        """
             
     
     @api.one
@@ -352,6 +354,7 @@ class fido_payroll(models.Model):
     
     
     @api.one    
+    @api.depends('name','daysabsent','start_date', 'end_date')
     def get_absentee(self,empid):
         contract_ids = self.get_contract(empid)
 #         contract_obj = self.env['hr.contract']
