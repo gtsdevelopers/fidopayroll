@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 class hr_contract(models.Model):
     _inherit = 'hr.contract'
     _description = 'Extends hr.contract to add new fields'
-    bagged_mult = fields.Float('Bagged Multiplier', digits=(5, 2), required=True, default=2,
+    bagged_mult = fields.Float('Bagged Multiplier', digits=(5, 2), required=True, default=2.5,
                                help="Multiplier for Bagger Commission. Varies per Bagger")
     kpbg_sold = fields.Float('Kpansia Sold Qty', digits=(7,1), required=True, default=0,
                                help="Quantity Sold This Month")
@@ -53,8 +53,10 @@ class fido_payroll(models.Model):
     _description = 'Fido Payroll Architecture'
     name = fields.Many2one('hr.employee', string='Payroll Staff', domain="[('company_id','=','FIDO PRODUCING LTD')]", required=True)
     phone = fields.Char(related='name.mobile_phone',store=True)
-    start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
-    end_date = fields.Date('Date End',default=date.today())
+    #start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
+    start_date = fields.Date('Date Begin',default=(date(date.today().year,date.today().month-1,28)))
+    end_date = fields.Date('Date End',default=date(date.today().year,date.today().month,27))
+    #end_date = fields.Date('Date End',default=date.today())
 #     paybatch_id = fields.Many2one('fido.payroll.batch', string='Fido Batch Reference')
         
     work_days_tot = fields.Integer(compute='get_workdays', string='Total Work Days',store=True)
@@ -96,6 +98,9 @@ class fido_payroll(models.Model):
                                help="Days absent from Work in Month. Affects Base Salary")
     company = fields.Selection([('fido1','FIDO WATER KPANSIA'),('fido2','FIDO WATER OBUNNA'),('gts','GTS'),
                             ('fpl1','FIDO PRODUCING ABUJA')],string='COMPANY', required=True , default='fido1')
+    saladv = fields.Float('Salary Advance', digits=(5,2), required=True,default='0.0',
+                               help="Salary Advance to be deducted from gross pay")
+    
     
         
     @api.one
@@ -325,6 +330,7 @@ class fido_payroll(models.Model):
             
     @api.one    
     def get_sal(self,empid):
+        """
         contract_ids = self.get_contract(empid)
 #         contract_obj = self.env['hr.contract']
 #         clause_contract =  [('employee_id', '=', empid)]
@@ -332,6 +338,10 @@ class fido_payroll(models.Model):
         for contract in contract_ids:
             self.item_qty = -1
             self.item_mult = contract.sal_adv
+        # Salary Advance now entered in front
+        """
+        self.item_mult = self.saladv
+        self.item_qty = -1
 
     @api.one    
     def get_tax(self,empid):

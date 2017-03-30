@@ -43,6 +43,7 @@
                             <field name="f_mnth"/>
                             <field name="x_year"/>
                             <field name="daysabsent"/>
+                            <field name="saladv"/>
                             
                             <field name="payroll_ref"/>
                         
