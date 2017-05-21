@@ -560,8 +560,8 @@ class fido_payroll_employee_inherit(models.Model):
     @api.one
     def pay_count(self):
         for record in self:
-            record_count = self.pool.get('fido.payroll')
-            pay_logger = record_count.search(self._cr,self._uid, [('name','=',record.id)])
+            record_count = self.env['fido.payroll']
+            pay_logger = record_count.search([('name','=',record.id)])
             record.pay_log = len(pay_logger)
 
 # class account_invoice_inherit(models.Model):
