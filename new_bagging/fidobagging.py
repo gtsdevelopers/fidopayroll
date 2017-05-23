@@ -47,10 +47,7 @@ class fido_bagger_line(models.Model):
 	bagger_id = fields.Many2one('fido.bagger', string='Fido Reference')
 	fido_date = fields.Date(default=fields.Date.today(), required=True)
 	x_quantity = fields.Integer(string="No of Bags", required=True)
-	_sql_constraints = [
-		('date_uniq', 'unique (fido_date)', "Bagger Date already exists !"),
-	]
-
+	
 
 class fido_bagging_inherit(models.Model):
 	_inherit =  "hr.employee"
