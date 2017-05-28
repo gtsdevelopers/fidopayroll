@@ -51,7 +51,7 @@ class fido_payroll(models.Model):
     _name = "fido.payroll"
     _inherit = 'mail.thread'
     _description = 'Fido Payroll Architecture'
-    name = fields.Many2one('hr.employee', string='Payroll Staff', domain="[('company_id','=','FIDO PRODUCING LTD')]", required=True)
+    name = fields.Many2one('hr.employee', string='Payroll Staff', required=True)
     phone = fields.Char(related='name.mobile_phone',store=True)
     #start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
     start_date = fields.Date('Date Begin',default=(date(date.today().year,date.today().month-1,28)))
@@ -153,8 +153,7 @@ class fido_payroll(models.Model):
         fmt = '%Y-%m-%d'
         pdayofwk = datetime.datetime.strptime(self.end_date, fmt)
         self.f_mnth = datetime.datetime.strftime(pdayofwk, '%B')
-     
-        
+
         
        
     @api.one
@@ -561,73 +560,6 @@ class fido_payroll_employee_inherit(models.Model):
     def pay_count(self):
         for record in self:
             record_count = self.env['fido.payroll']
-            pay_logger = record_count.search([('name','=',record.id)])
+            pay_logger = record_count.search( [('name','=',record.id)])
             record.pay_log = len(pay_logger)
 
-# class account_invoice_inherit(models.Model):
-#     _inherit = 'account.invoice'
-#     _description = 'Changes the link between Customer name and salesperson'
-#     partner_id = fields.Many2one('res.partner', string='Partner', change_default=True,
-#         required=True, readonly=True, states={'draft': [('readonly', False)]},
-#         track_visibility='always')
-#     user_id = fields.Many2one(related='partner_id.user_id',string='Salesperson', track_visibility='onchange',
-#         readonly=True, states={'draft': [('readonly', False)]})
-#     date_invoice = fields.Date(string='Invoice Date',default=date.today(),
-#         readonly=True, states={'draft': [('readonly', False)]}, index=True,
-#         help="Change to correct date.", copy=False)
-
-#     
-
-# class fido_payroll_batch(models.Model):
-#     _name = 'fido.payroll.batch'      
-# #     _inherit = 'fido.payroll'
-#     _description = 'create multiple payslips'
-# #     payslip_ids = fields.One2many('fido.payroll', 'paybatch_id')
-#     name = fields.Char(compute='get_name',readonly=True,string='Batch Name')
-# #     batch_ref = fields.Char(compute='get_name',readonly=True,string='Batch Ref',store=True)
-#     topname = fields.Char(compute='get_name',readonly=True,string='Top Name',store=True)
-#     work_days_tot = fields.Integer(compute='get_name',readonly=True,string='Total Workdays',store=True)
-#     
-#     start_date = fields.Date('Date Begin',default=(date.today() + relativedelta(day=1)))
-#     end_date = fields.Date('Date End',default=date.today())
-#     b_month = fields.Char(string='Month',default=date.today().strftime('%B'))
-#     
-#     @api.one
-#     @api.constrains('start_date', 'end_date')
-#     def _check_valids(self):
-#         if self.start_date > self.end_date:
-#             raise ValidationError("Field start_date must be before end_date")
-#        
-#     @api.one
-#     @api.depends('start_date','end_date')
-#     def get_name(self):       
-#         if (self.b_month):            
-#             self.topname = 'Batch Payroll for ' + str(self.b_month)
-#             self.name = 'Payroll for ' + str(self.b_month) 
-#             self.batch_ref = 'Fido/Payroll/' + str(self.b_month)
-#         else:
-#             self.b_month =  date.today().strftime('%B') 
-#             self.topname = 'Batch Payroll for ' + str(self.b_month)
-#             self.name = 'Payroll for ' + str(self.b_month) 
-#             self.batch_ref = 'Fido/Payroll/' + str(self.b_month)
-#         fmt = '%Y-%m-%d'
-#         workdays = datetime.datetime.strptime(self.end_date, fmt) - datetime.datetime.strptime(self.start_date, fmt)          
-#         sundays = workdays.days / 7 
-#         self.work_days_tot = workdays.days - sundays
-#         
-#     @api.one    
-#     @api.depends('start_date','end_date')
-#     def create_batch(self):
-#         emp_obj = self.env['hr.employee']
-#         for emp in emp_obj.search([]):
-#             _logger.info("*** BATCH Processing  = %s | %s ",emp.name,emp.user_id.name)
-#             self.env['fido.payroll'].create({'paybatch_id':self.id,'name':emp_obj,'start_date':self.start_date,'end_date':self.end_date,'f_mnth':self.b_month})
-#             
-#             _logger.info("*** BATCH Processing  AFTER Create LINES %s ",emp.name)
-#             
-#    
-#         # bagger needs name
-#             
-#     
-#     
-#     
