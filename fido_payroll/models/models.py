@@ -18,6 +18,10 @@ class hr_contract(models.Model):
                                help="Quantity Sold This Month")
     obbg_sold = fields.Float('Obunna Sold Qty', digits=(7,1), required=True, default=0,
                                help="Obunna Quantity Sold This Month")
+    ygbg_sold = fields.Float('YENEGWE Sold Qty', digits=(7,1), required=True, default=0,
+                               help="YENEGWE Quantity Sold This Month")
+    ygbgsold_mult = fields.Float('Yenegwe Sold Multiplier', digits=(5, 2), required=True, default=1,
+                               help="Multiplier for Bag Seller Commission. Varies per seller")
 
     bagsold_mult = fields.Float('Bags Sold Multiplier', digits=(5, 2), required=True, default=1,
                                help="Multiplier for Bag Seller Commission. Varies per seller")
@@ -101,8 +105,6 @@ class fido_payroll(models.Model):
     saladv = fields.Float('Salary Advance', digits=(5,2), required=True,default='0.0',
                                help="Salary Advance to be deducted from gross pay")
     
-    
-        
     @api.one
     @api.constrains('start_date', 'end_date')
     def _check_valids(self):
@@ -153,9 +155,7 @@ class fido_payroll(models.Model):
         fmt = '%Y-%m-%d'
         pdayofwk = datetime.datetime.strptime(self.end_date, fmt)
         self.f_mnth = datetime.datetime.strftime(pdayofwk, '%B')
-
-        
-       
+     
     @api.one
     @api.depends('name','start_date','end_date')
     def get_workdays(self):
@@ -211,6 +211,22 @@ class fido_payroll(models.Model):
             else:
                 self.item_qty = contract.kpbg_sold
                 self.item_mult = contract.kpbgsold_mult
+
+    @api.one    
+    def get_ygcommission(self,empid):
+        contract_ids = self.get_contract(empid)
+        
+#         contract_obj = self.env['hr.contract']
+#         clause_contract =  [('employee_id', '=', empid)]
+#         contract_ids = contract_obj.search(clause_contract)
+        for contract in contract_ids:
+            if contract.date_end and contract.date_end <= self.start_date:
+                self.item_qty = 0
+                self.item_mult = 0
+            else:
+                self.item_qty = contract.ygbg_sold
+                self.item_mult = contract.ygbgsold_mult
+
     
     @api.one    
     def get_obcommission(self,empid):
@@ -271,6 +287,8 @@ class fido_payroll(models.Model):
                 self.item_mult = contract.kpbgsold_mult
             elif itemid == 'OB Bags Sales Commission':
                 self.item_mult = contract.obbgsold_mult            
+            elif itemid == 'YG Bags Sales Commission':
+                self.item_mult = contract.ygbgsold_mult
             elif itemid == 'Crates Sales Commission':
                 self.item_mult = contract.cratesold_mult
             elif itemid == 'Dispenser Sales Commission':
@@ -486,6 +504,12 @@ class fido_payroll(models.Model):
             self.product_cat = 'PUREWATER'
             _logger.info("*** LOGGING Processing  %s ",self.item_id)
             self.get_obcommission(empid)
+
+        elif item_id == 'YG Bags Sales Commission':            
+            self.product_cat = 'PUREWATER'
+            _logger.info("*** LOGGING Processing  %s ",self.item_id)
+            self.get_ygcommission(empid)
+        
             
         elif item_id == 'Crates Sales Commission':            
             self.product_cat = 'BOTTLE CRATES'
@@ -560,6 +584,7 @@ class fido_payroll_employee_inherit(models.Model):
     def pay_count(self):
         for record in self:
             record_count = self.env['fido.payroll']
-            pay_logger = record_count.search( [('name','=',record.id)])
+            pay_logger = record_count.search([('name','=',record.id)])
             record.pay_log = len(pay_logger)
 
+#     
