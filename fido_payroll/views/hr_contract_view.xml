@@ -23,11 +23,16 @@
                 <field name="kpbgsold_mult" position="after">
                     <field name="obbgsold_mult"/>
                 </field>
-                
-                
                 <field name="obbgsold_mult" position="after">
+                    <field name="ygbgsold_mult"/>
+                </field>
+                
+                
+                <field name="ygbgsold_mult" position="after">
                     <field name="sal_adv"/>
                 </field>
+                
+                
                 <field name="sal_adv" position="after">
                     <field name="loan_adv"/>
                 </field>
@@ -44,6 +49,10 @@
                     <field name="obbg_sold"/>
                 </field>
                 <field name="obbg_sold" position="after">
+                    <field name="ygbg_sold"/>
+                </field>
+                
+                <field name="ygbg_sold" position="after">
                     <field name="disp_sold"/>
                 </field>
                 <field name="disp_sold" position="after">
